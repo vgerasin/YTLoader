@@ -67,6 +67,7 @@ extension Engine {
             it.status = .resolving
             if !toolsReady || tools.hasYtdlp {
                 items.append(it)
+                fetchPreview(it)
             } else {
                 fail(it, message: Loc.t(lang, "err.noYtdlp"), kind: .generic)
                 items.append(it)

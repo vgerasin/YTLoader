@@ -43,6 +43,12 @@ final class Job {
     var destinations: [String] = []
     var tempDir = ""
     var finishing = false
+    // для журнала: сколько времени занял каждый этап
+    let started = Date()
+    var firstProgressAt: Date?
+    var finishingAt: Date?
+    var elapsed: String { Job.seconds(Date().timeIntervalSince(started)) }
+    static func seconds(_ t: TimeInterval) -> String { String(format: "%.1fs", t) }
 
     init(kind: Kind, tracker: ProgressTracker = ProgressTracker()) {
         self.kind = kind

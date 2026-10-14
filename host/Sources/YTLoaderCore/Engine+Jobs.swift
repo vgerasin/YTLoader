@@ -10,7 +10,9 @@ extension Engine {
         let job = Job(kind: .resolve)
         jobs[it.id] = job
         let id = it.id
-        Log.shared.write("resolve \(it.url)")
+        let cookies = it.noCookies ? "off" : settings.cookieBrowser
+        let js = tools.jsKind.isEmpty ? "none" : tools.jsKind
+        Log.shared.write("resolve \(it.url) cookies=\(cookies) js=\(js) fallback=\(it.fallback)")
         do {
             job.process = try RunningProcess.start(
                 exe: tools.ytdlp, args: args, env: ArgsBuilder.environment(tools: tools),
@@ -33,6 +35,7 @@ extension Engine {
         jobs[id] = nil
         guard let it = item(id) else { return }
         if job.intent != .none || shuttingDown { return }
+        Log.shared.write("resolve finished in \(job.elapsed) exit=\(code)")
         if code != 0 {
             fail(it, lines: job.tail)
             return
@@ -282,6 +285,10 @@ extension Engine {
         switch event {
         case .progress(let p):
             if job.finishing { return }
+            if job.firstProgressAt == nil {
+                job.firstProgressAt = Date()
+                Log.shared.write("download: first progress after \(job.elapsed) (yt-dlp startup + extraction)")
+            }
             let snap = job.tracker.update(p)
             it.downloaded = snap.downloaded
             it.total = snap.total
@@ -315,6 +322,7 @@ extension Engine {
     func enterFinishing(_ it: Item, _ job: Job, stage: String) {
         if !job.finishing {
             job.finishing = true
+            job.finishingAt = Date()
             job.tracker.complete()
             it.streams = job.tracker.streams
             it.pct = 100
@@ -338,6 +346,15 @@ extension Engine {
         }
         it.speed = 0
         it.eta = 0
+        if job.intent == .none {
+            var parts = ["total \(job.elapsed)"]
+            if let f = job.firstProgressAt {
+                parts.append("preparation \(Job.seconds(f.timeIntervalSince(job.started)))")
+                parts.append("transfer \(Job.seconds((job.finishingAt ?? Date()).timeIntervalSince(f)))")
+            }
+            if let fin = job.finishingAt { parts.append("finishing \(Job.seconds(Date().timeIntervalSince(fin)))") }
+            Log.shared.write("download finished exit=\(code): " + parts.joined(separator: ", "))
+        }
         switch job.intent {
         case .pause, .defer_, .shutdown:
             dirty = true
