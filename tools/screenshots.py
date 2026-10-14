@@ -35,7 +35,7 @@ def item(i, **kw):
     d = dict(id=f"i{i}", url=f"https://www.youtube.com/watch?v=demo{i:04d}", title="", channel="", status="queued",
              stage="video", pct=0, total=0, downloaded=0, speed=0, eta=0, quality="1080p", format="mp4",
              duration=0, thumb="", streams=[], added=i, error="", rawError="", noCookies=False,
-             groupId="", groupTitle="", groupTotal=0, deferMode="", deferTime="", filepath="", dateLabel="")
+             groupId="", groupTitle="", groupTotal=0, deferMode="", deferTime="", filepath="", dateLabel="", site="YouTube")
     d.update(kw); return d
 
 MB = 1048576
@@ -46,10 +46,10 @@ items = [
     item(2, title="Ambient Focus Mix — 2 hours of calm music", channel="Quiet Waves", status="downloading", stage="audio",
          quality="audio", format="mp3", pct=88, total=int(118*MB), downloaded=int(104*MB), speed=int(4.1*MB), eta=4, duration=7200, thumb=T[2],
          streams=[dict(kind="audio", total=int(118*MB), done=int(104*MB), active=True)]),
-    item(3, title="Курс по данным, урок 4: витрины и слой KPI", channel="Школа аналитики", status="downloading", stage="merge",
+    item(3, url="https://vk.com/video-22822305_456239018", site="VK", title="Курс по данным, урок 4: витрины и слой KPI", channel="Школа аналитики", status="downloading", stage="merge",
          pct=100, total=int(430*MB), downloaded=int(430*MB), duration=1980, thumb=T[3],
          streams=[dict(kind="video", total=int(400*MB), done=int(400*MB)), dict(kind="audio", total=int(30*MB), done=int(30*MB))]),
-    item(4, title="Planning your week: a 15-minute method", channel="Deep Work Studio", status="queued", duration=905, thumb=T[1]),
+    item(4, url="https://rutube.ru/video/0123456789abcdef0123456789abcdef/", site="Rutube", title="Planning your week: a 15-minute method", channel="Deep Work Studio", status="queued", duration=905, thumb=T[1]),
 ]
 deferred = [
     item(20, title="Большой документальный фильм в 4K", channel="Doc Archive", status="deferred", deferMode="wifi", quality="best", duration=5400, thumb=T[1]),
@@ -58,7 +58,7 @@ deferred = [
 history = [
     item(30, title="Основы Python за 60 минут", channel="Код с нуля", status="done", total=int(640*MB), dateLabel="Сегодня, 10:42", filepath="/Users/demo/Movies/YTLoader/Код с нуля/Основы Python за 60 минут.mp4", duration=3600, thumb=T[0]),
     item(31, title="Lo-fi beats to study to", channel="Quiet Waves", status="done", quality="audio", format="mp3", total=int(86*MB), dateLabel="Вчера, 21:15", filepath="/Users/demo/Movies/YTLoader/Quiet Waves/Lo-fi beats.mp3", duration=5400, thumb=T[2]),
-    item(32, title="Интервью: как строить культуру данных", channel="Школа аналитики", status="done", total=int(1.4*1024*MB), dateLabel="12 окт., 18:03", filepath="/Users/demo/Movies/YTLoader/Школа аналитики/Интервью.mp4", quality="1440p", duration=4800, thumb=T[3]),
+    item(32, url="https://vimeo.com/76979871", site="Vimeo", title="Интервью: как строить культуру данных", channel="Школа аналитики", status="done", total=int(1.4*1024*MB), dateLabel="12 окт., 18:03", filepath="/Users/demo/Movies/YTLoader/Школа аналитики/Интервью.mp4", quality="1440p", duration=4800, thumb=T[3]),
 ]
 
 def state(items_, history_=history, **kw):

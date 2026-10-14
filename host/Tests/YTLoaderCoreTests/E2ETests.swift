@@ -202,12 +202,21 @@ final class E2ETests: XCTestCase {
 
     func testSectionCut() throws {
         try requireE2E()
-        try XCTSkipUnless(Components.detect().hasFFmpeg, "ffmpeg is not installed")
+        let tools = Components.detect()
+        try XCTSkipUnless(tools.hasFFmpeg, "ffmpeg is not installed")
         let (e, c) = try makeEngine(folder: tempFolder())
-        e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/sample.mp4",
+        // HLS: ffmpeg читает его потоково; простой http.server не умеет Range, а mp4 без него не вырезать
+        e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/hls/master.m3u8",
                                           "sectionFrom": "00:00:01", "sectionTo": "00:00:03"])
         try wait("done or error") { c.history.count == 1 || c.items.first?["status"] as? String == "error" }
         XCTAssertEqual(c.history.count, 1, "section download failed: \(c.items)")
+        let path = c.history.first?["filepath"] as? String ?? ""
+        XCTAssertTrue(FileManager.default.fileExists(atPath: path), path)
+        if tools.hasFFprobe,
+           let out = runCapture(tools.ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path]),
+           let d = Double(out) {
+            XCTAssertLessThan(d, 4.5, "фрагмент должен быть короче исходных 8 секунд")
+        }
         e.shutdown()
     }
 
