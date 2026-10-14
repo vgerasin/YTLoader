@@ -29,7 +29,7 @@
 - Главы, встроенные обложка и метаданные.
 - Вырезание спонсорских вставок по базе SponsorBlock.
 - Раскладка по папкам: всё в одну, по каналам или по плейлистам; шаблон имени файла.
-- Кодек: любой, H.264 (открывается в Quick Look и Final Cut) или AV1 (меньше размер).
+- Кодек: H.264 (по умолчанию, открывается в QuickTime, Quick Look и Final Cut), AV1 (меньше размер) или любой.
 - **История** с поиском по названию и каналу, «Показать в Finder» и «Скачать снова».
 
 **Устойчивость**
@@ -39,6 +39,7 @@
 - Журнал и диагностика: что найдено на машине (yt-dlp, ffmpeg, ffprobe, JS-движок) прямо в настройках.
 
 **Оформление и система**
+- Настройки разложены по вкладкам (загрузка, видео, поведение, оформление, система): изменения применяются по кнопке «Сохранить».
 - Светлая и тёмная темы, акцентный цвет (он же красит значок в Dock), три плотности списка: карточки, компактные карточки и плотный список.
 - Прогресс на значке в Dock, значок в строке меню с очередью и добавлением ссылки из буфера, системные уведомления о завершении.
 - Язык: русский, English, Deutsch, Français, Español или как в системе.
@@ -55,19 +56,18 @@
 
 <table>
 <tr>
-<td align="center"><img src="docs/screenshots/02-settings.png" width="360" alt="Настройки"><br><sub>Настройки</sub></td>
-<td align="center"><img src="docs/screenshots/05-onboarding.png" width="360" alt="Мастер первого запуска"><br><sub>Мастер первого запуска</sub></td>
+<td align="center"><img src="docs/screenshots/02-settings.png" alt="Настройки: загрузка"><br><sub>Настройки · Загрузка</sub></td>
+<td align="center"><img src="docs/screenshots/06-settings-appearance.png" alt="Настройки: оформление"><br><sub>Настройки · Оформление (тёмная тема)</sub></td>
+<td align="center"><img src="docs/screenshots/05-onboarding.png" alt="Мастер первого запуска"><br><sub>Мастер первого запуска</sub></td>
 </tr>
 </table>
 
-> Скриншоты — это настоящий файл интерфейса `app/Resources/ui.html`, отрисованный на вымышленных данных
-> (названия роликов и пути придуманы), поэтому в них нет рамки системного окна macOS.
-> Обновить их можно командой `make screenshots`.
+<sub>Скриншоты сделаны на вымышленных данных; обновить их можно командой `make screenshots`.</sub>
 
 ## Установка
 
-1. Скачайте **[YTLoader-5.1.1.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.1.1.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
-   Отдельный образ только для Intel: **[YTLoader-5.1.1-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.1.1-intel.dmg)**.
+1. Скачайте **[YTLoader-5.2.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.2.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
+   Отдельный образ только для Intel: **[YTLoader-5.2-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.2-intel.dmg)**.
    Контрольные суммы SHA-256 — в файле [downloads/SHA256SUMS](downloads/SHA256SUMS).
 2. Откройте DMG и перетащите YTLoader в «Программы».
 3. Первый запуск: приложение подписано без аккаунта разработчика Apple, поэтому macOS может его не открыть.
@@ -114,7 +114,7 @@ make screenshots  # обновить docs/screenshots (python3 + playwright)
 ### Выпуск новой версии
 
 1. Поднимите номер в `VERSION` и допишите `CHANGELOG.md`, закоммитьте.
-2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v5.1.1 && git push origin v5.1.1`).
+2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v5.2 && git push origin v5.2`).
    GitHub соберёт оба DMG на macOS, выложит их в Releases и обновит папку `downloads/`.
 
 Как устроен мост между интерфейсом и оболочкой и как добавлять функции — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

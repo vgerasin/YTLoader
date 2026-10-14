@@ -131,6 +131,9 @@
        border:1px solid var(--fieldBorder);background:transparent;color:var(--muted);transition:.15s}
   .btn:hover{color:var(--text);background:var(--chip)}
   .btn.solid{background:var(--surface);color:var(--text);border-color:var(--fieldBorder)}
+  .btn.danger{color:var(--errText);border-color:transparent;background:var(--errBg)}
+  .btn.danger:hover{color:var(--errText);filter:brightness(.96);background:var(--errBg)}
+  .btn[disabled]{opacity:.45;cursor:default;pointer-events:none;filter:saturate(.5)}
   .btn.primary{border:none;color:var(--onAccent);font-weight:700;padding:7px 13px;
                background:linear-gradient(180deg,var(--accentHi),var(--accent));
                box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
@@ -268,21 +271,35 @@
 
   /* ---------------------------------------------------------- настройки */
   .scrim{position:absolute;inset:0;background:rgba(0,0,0,.12);z-index:40}
-  .sheet{position:absolute;top:52px;right:12px;width:420px;z-index:50;border-radius:20px;
+  .sheet{position:absolute;top:52px;right:12px;width:460px;max-width:calc(100% - 24px);z-index:50;border-radius:20px;
          border:1px solid var(--panelBorder);background:var(--panel);
          backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
          box-shadow:0 26px 60px -20px rgba(0,0,0,.5);overflow:hidden}
-  .sheeth{padding:12px 14px 10px;background:var(--gloss);border-bottom:1px solid var(--hairline);
-          display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700}
+  .sheeth{padding:10px 12px 10px 16px;background:var(--gloss);
+          display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
   .sheeth .ver{font-size:11px;font-weight:400;color:var(--faint)}
-  .sheetb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;
-          max-height:calc(100vh - 104px);overflow-y:auto;overscroll-behavior:contain}
-  /* заголовок раздела — как в системных настройках */
+  .sheeth .sx{display:flex;align-items:center;gap:6px;padding:5px 11px}
+  /* вкладки разделов */
+  .stabs{display:flex;gap:2px;padding:0 10px;background:var(--gloss);border-bottom:1px solid var(--hairline)}
+  .stab{flex:1 1 auto;min-width:0;font-family:inherit;font-size:12px;font-weight:600;color:var(--muted);background:transparent;
+        border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:8px 6px 9px;cursor:pointer;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s,border-color .15s}
+  .stab:hover{color:var(--text)}
+  .stab.on{color:var(--text);border-bottom-color:var(--accent)}
+  .sheetb{padding:12px;max-height:calc(100vh - 212px);overflow-y:auto;overscroll-behavior:contain}
+  /* все разделы лежат в одной ячейке сетки: высота окна задаётся самым высоким,
+     и при переключении вкладок оно не прыгает */
+  .panes{display:grid}
+  .pane{grid-area:1/1;align-self:start;display:flex;flex-direction:column;gap:8px;min-width:0;visibility:hidden;pointer-events:none}
+  .pane.act{visibility:visible;pointer-events:auto}
   .sect{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
         color:var(--faint);padding:8px 4px 0}
   .sect:first-child{padding-top:2px}
-  .sheetf{display:flex;align-items:center;gap:8px;padding:10px 12px;
+  .sheetf{display:flex;align-items:center;gap:8px;padding:10px 12px;min-height:54px;box-sizing:border-box;
           border-top:1px solid var(--hairline);background:var(--gloss)}
+  .sheetf .fhint{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .sheetf .fhint.dirty::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .sheetf .fhint.warn{color:var(--errText);font-weight:600}
   .group{border-radius:14px;background:var(--surface);border:1px solid var(--surfaceBorder);overflow:visible}
   .group.pad{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
   .glabel{font-size:11.5px;color:var(--muted)}
@@ -555,6 +572,9 @@ const I18N = {
     // --- настройки
     "Загрузка": "Downloading", "Что качать вместе с видео": "Download alongside the video",
     "Поведение": "Behaviour", "Оформление": "Appearance", "Диагностика": "Diagnostics",
+    "Закрыть": "Close", "Сохранить": "Save", "Система": "System", "Настройки сохранены": "Settings saved",
+    "Есть несохранённые изменения": "You have unsaved changes", "Закрыть без сохранения?": "Close without saving?",
+    "Не сохранять": "Discard", "Вернуться": "Keep editing",
     "Папка сохранения": "Download folder", "Качество": "Quality", "Одновременно": "At once",
     "Лимит скорости": "Speed limit", "Раскладка по папкам": "Folder layout",
     "Кодек видео": "Video codec", "Плотность списка": "List density",
@@ -680,6 +700,9 @@ const I18N = {
       "Kapitel, Ausschnitte und SponsorBlock scheitern. Kommt zusammen mit ffmpeg:",
     "Загрузка": "Herunterladen", "Что качать вместе с видео": "Zusätzlich zum Video laden",
     "Поведение": "Verhalten", "Оформление": "Darstellung", "Диагностика": "Diagnose",
+    "Закрыть": "Schließen", "Сохранить": "Sichern", "Система": "System", "Настройки сохранены": "Einstellungen gesichert",
+    "Есть несохранённые изменения": "Es gibt ungesicherte Änderungen", "Закрыть без сохранения?": "Ohne Sichern schließen?",
+    "Не сохранять": "Verwerfen", "Вернуться": "Weiter bearbeiten",
     "Папка сохранения": "Zielordner", "Качество": "Qualität", "Одновременно": "Gleichzeitig",
     "Лимит скорости": "Geschwindigkeitslimit", "Раскладка по папкам": "Ordnerstruktur",
     "Кодек видео": "Video-Codec", "Плотность списка": "Listendichte",
@@ -804,6 +827,9 @@ const I18N = {
       "Chapitres, extraits et SponsorBlock échoueront. Il vient avec ffmpeg :",
     "Загрузка": "Téléchargement", "Что качать вместе с видео": "À télécharger avec la vidéo",
     "Поведение": "Comportement", "Оформление": "Apparence", "Диагностика": "Diagnostic",
+    "Закрыть": "Fermer", "Сохранить": "Enregistrer", "Система": "Système", "Настройки сохранены": "Réglages enregistrés",
+    "Есть несохранённые изменения": "Modifications non enregistrées", "Закрыть без сохранения?": "Fermer sans enregistrer ?",
+    "Не сохранять": "Ne pas enregistrer", "Вернуться": "Continuer",
     "Папка сохранения": "Dossier de destination", "Качество": "Qualité", "Одновременно": "Simultanément",
     "Лимит скорости": "Limite de vitesse", "Раскладка по папкам": "Organisation des dossiers",
     "Кодек видео": "Codec vidéo", "Плотность списка": "Densité de la liste",
@@ -928,6 +954,9 @@ const I18N = {
       "Capítulos, fragmentos y SponsorBlock fallarán. Viene con ffmpeg:",
     "Загрузка": "Descarga", "Что качать вместе с видео": "Qué descargar junto al vídeo",
     "Поведение": "Comportamiento", "Оформление": "Apariencia", "Диагностика": "Diagnóstico",
+    "Закрыть": "Cerrar", "Сохранить": "Guardar", "Система": "Sistema", "Настройки сохранены": "Ajustes guardados",
+    "Есть несохранённые изменения": "Hay cambios sin guardar", "Закрыть без сохранения?": "¿Cerrar sin guardar?",
+    "Не сохранять": "No guardar", "Вернуться": "Seguir editando",
     "Папка сохранения": "Carpeta de destino", "Качество": "Calidad", "Одновременно": "A la vez",
     "Лимит скорости": "Límite de velocidad", "Раскладка по папкам": "Organización en carpetas",
     "Кодек видео": "Códec de vídeo", "Плотность списка": "Densidad de la lista",
@@ -1866,31 +1895,39 @@ function saveSettings(patch) { api("/api/settings", patch); }
 
 let logOpen = false;
 
+const SHEET_TABS = [["load", "Загрузка"], ["video", "Видео"], ["behav", "Поведение"],
+                    ["look", "Оформление"], ["sys", "Система"]];
+const DEFAULT_TEMPLATE = "%(title)s [%(id)s].%(ext)s";
+let sheetTab = "load";
+let draft = {};            // правки, которые ещё не сохранены
+let confirmClose = false;  // спрашиваем, закрывать ли без сохранения
+
+const X_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" '
+  + 'stroke-width="1.7" stroke-linecap="round"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg>';
+
 function sheetHtml(s) {
   const st = s.settings;
-  const sw = (id, on, title, note) =>
+  const cur = k => (k in draft ? draft[k] : st[k]);
+  const sw = (id, title, note) =>
     `<div class="grow"><div style="flex:1;min-width:0"><div class="t">${esc(t(title))}</div>
       <div class="s">${esc(t(note))}</div></div>
-      <button class="switch${on ? " on" : ""}" data-sw="${id}"><span class="knob"></span></button></div>`;
+      <button class="switch${cur(id) ? " on" : ""}" data-sw="${id}" role="switch" aria-checked="${!!cur(id)}"
+        aria-label="${esc(t(title))}"><span class="knob"></span></button></div>`;
   const dots = ["#007AFF", "#30D158", "#FF9F0A", "#AF52DE", "#FF375F"].map(c =>
     `<button class="accdot" data-acc="${c}" style="background:linear-gradient(180deg,${mix(c, "white", .22)},${c});`
-    + `border-color:${st.accent === c ? "var(--text)" : "transparent"}"></button>`).join("");
+    + `border-color:${cur("accent") === c ? "var(--text)" : "transparent"}"></button>`).join("");
   const field = (id, label) =>
     `<div class="group pad" id="${id}" style="flex:1;position:relative">
        <div class="glabel">${esc(t(label))}</div>
        <button class="fieldbtn"><span class="val"></span>${CHEV}</button></div>`;
-  const sect = title => `<div class="sect">${esc(t(title))}</div>`;
+  const pair = (a, b) => `<div class="row" style="flex-wrap:nowrap;gap:8px;align-items:stretch">${a}${b}</div>`;
   // длинные пути раньше ломались посреди слова («Resou|rces») — переносим
   // только после «/», как это делает сам Finder
   const env = (k, v) => `<div><span class="k">${esc(t(k))}</span><span class="v">${esc(v).replace(/\//g, "/<wbr>")}</span></div>`;
 
-  return `<div class="scrim" data-s="close"></div>
-  <div class="sheet">
-    <div class="sheeth">${esc(t("Настройки"))}<div class="spacer"></div>
-      <span class="ver">${s.env.ytdlpVersion ? "yt-dlp " + esc(s.env.ytdlpVersion) : ""}</span></div>
-    <div class="sheetb">
-
-      ${sect("Загрузка")}
+  // Выпадающие списки — вверху раздела: их меню раскрываются вниз и не должны упираться в край окна.
+  const panes = {
+    load: `
       <div class="group pad">
         <div class="glabel">${esc(t("Папка сохранения"))}</div>
         <div class="row" style="flex-wrap:nowrap">
@@ -1898,58 +1935,47 @@ function sheetHtml(s) {
           <button class="btn" data-s="choose">${esc(t("Обзор…"))}</button>
         </div>
       </div>
-      <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:stretch">
-        ${field("ddDefQ", "Качество")}
-        ${field("ddConc", "Одновременно")}
-      </div>
-      <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:stretch">
-        ${field("ddSpeed", "Лимит скорости")}
-        ${field("ddOrganize", "Раскладка по папкам")}
-      </div>
-      ${field("ddCodec", "Кодек видео")}
+      ${pair(field("ddDefQ", "Качество"), field("ddConc", "Одновременно"))}
+      ${pair(field("ddSpeed", "Лимит скорости"), field("ddOrganize", "Раскладка по папкам"))}
       ${field("ddCookie", "Cookies из браузера — нужны для приватных и возрастных видео")}
       <div class="group pad">
         <div class="glabel">${esc(t("Шаблон имени файла"))}</div>
-        <input type="text" id="setTemplate" value="${esc(st.filenameTemplate)}" style="width:100%">
-      </div>
-
-      ${sect("Что качать вместе с видео")}
+        <input type="text" id="setTemplate" value="${esc(cur("filenameTemplate"))}" style="width:100%">
+      </div>`,
+    video: `
+      ${field("ddCodec", "Кодек видео")}
       ${field("ddSubs", "Субтитры")}
       <div class="group">
-        ${sw("subsEmbed", st.subsEmbed, "Вшивать субтитры в файл", "Иначе рядом ляжет отдельный .srt")}
+        ${sw("subsEmbed", "Вшивать субтитры в файл", "Иначе рядом ляжет отдельный .srt")}
         <div class="divider"></div>
-        ${sw("chapters", st.chapters, "Главы", "Разделы ролика видны в плеере")}
+        ${sw("chapters", "Главы", "Разделы ролика видны в плеере")}
         <div class="divider"></div>
-        ${sw("sponsorblock", st.sponsorblock, "Вырезать спонсорские вставки", "По базе SponsorBlock")}
-      </div>
-
-      ${sect("Поведение")}
+        ${sw("sponsorblock", "Вырезать спонсорские вставки", "По базе SponsorBlock")}
+      </div>`,
+    behav: `
       <div class="group">
-        ${sw("wifiOnly", st.wifiOnly, "Только по Wi-Fi", "На мобильной сети уходит в «Отложено»")}
+        ${sw("wifiOnly", "Только по Wi-Fi", "На мобильной сети уходит в «Отложено»")}
         <div class="divider"></div>
-        ${sw("autoResume", st.autoResume, "Продолжать после перезапуска", "Иначе очередь ждёт нажатия")}
+        ${sw("autoResume", "Продолжать после перезапуска", "Иначе очередь ждёт нажатия")}
         <div class="divider"></div>
-        ${sw("clipboardWatch", st.clipboardWatch, "Предлагать ссылку из буфера", "При возврате в окно")}
+        ${sw("clipboardWatch", "Предлагать ссылку из буфера", "При возврате в окно")}
         <div class="divider"></div>
-        ${sw("autoUpdate", st.autoUpdate, "Обновлять yt-dlp сам", "Раз в неделю и сразу после отказа сайта")}
+        ${sw("autoUpdate", "Обновлять yt-dlp сам", "Раз в неделю и сразу после отказа сайта")}
         <div class="divider"></div>
-        ${sw("notify", st.notify, "Уведомлять о завершении", "Системное уведомление и звук")}
-      </div>
-
-      ${sect("Оформление")}
-      ${field("ddLang", "Язык")}
-      ${field("ddDensity", "Плотность списка")}
+        ${sw("notify", "Уведомлять о завершении", "Системное уведомление и звук")}
+      </div>`,
+    look: `
+      ${pair(field("ddLang", "Язык"), field("ddDensity", "Плотность списка"))}
       <div class="group">
-        ${sw("dockBadge", st.dockBadge, "Прогресс на значке в Dock", "Процент и счётчик, пока окно свёрнуто")}
+        ${sw("dockBadge", "Прогресс на значке в Dock", "Процент и счётчик, пока окно свёрнуто")}
         <div class="divider"></div>
-        ${sw("menuBar", st.menuBar, "Значок в строке меню", "Очередь и прогресс без открытия окна")}
+        ${sw("menuBar", "Значок в строке меню", "Очередь и прогресс без открытия окна")}
       </div>
       <div class="group pad">
         <div class="glabel">${esc(t("Акцентный цвет — им же красится значок в Dock"))}</div>
         <div class="row" id="accRow">${dots}</div>
-      </div>
-
-      ${sect("Диагностика")}
+      </div>`,
+    sys: `
       <div class="group pad">
         <div class="glabel">${esc(t("Что нашлось на этой машине"))}</div>
         <div class="envlist">
@@ -1961,19 +1987,59 @@ function sheetHtml(s) {
           ${env("окно", s.env.window || "—")}
         </div>
       </div>
+      <div class="row">
+        <button class="btn" data-s="update">${esc(t("Обновить yt-dlp"))}</button>
+        <button class="btn${logOpen ? " solid" : ""}" data-s="log" id="logBtn">${esc(t("Журнал"))}</button>
+      </div>
       <div id="logWrap" style="display:${logOpen ? "" : "none"};flex-direction:column;gap:8px">
         <div class="logbox" id="logBox">${esc(t("загружаю журнал…"))}</div>
         <div class="row"><button class="btn" data-s="openlog">${esc(t("Открыть файл в Finder"))}</button></div>
-      </div>
-    </div>
+      </div>`,
+  };
 
-    <div class="sheetf">
-      <button class="btn" data-s="update">${esc(t("Обновить yt-dlp"))}</button>
-      <button class="btn${logOpen ? " solid" : ""}" data-s="log" id="logBtn">${esc(t("Журнал"))}</button>
+  const tabs = SHEET_TABS.map(([id, label]) =>
+    `<button class="stab${id === sheetTab ? " on" : ""}" role="tab" data-tab="${id}"
+       aria-selected="${id === sheetTab}">${esc(t(label))}</button>`).join("");
+  const body = SHEET_TABS.map(([id]) =>
+    `<section class="pane${id === sheetTab ? " act" : ""}" role="tabpanel" data-pane="${id}">${panes[id]}</section>`).join("");
+
+  return `<div class="scrim" data-s="close"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(t("Настройки"))}">
+    <div class="sheeth">${esc(t("Настройки"))}
+      <span class="ver">${s.env.ytdlpVersion ? "yt-dlp " + esc(s.env.ytdlpVersion) : ""}</span>
       <div class="spacer"></div>
-      <button class="btn primary" data-s="close">${esc(t("Готово"))}</button>
+      <button class="btn sx" data-s="close" title="Esc">${X_ICON}${esc(t("Закрыть"))}</button>
     </div>
+    <div class="stabs" role="tablist">${tabs}</div>
+    <div class="sheetb"><div class="panes">${body}</div></div>
+    <div class="sheetf" id="sheetFoot">${footHtml()}</div>
   </div>`;
+}
+
+function footHtml() {
+  const n = Object.keys(draft).length;
+  if (confirmClose) {
+    return `<div class="fhint warn">${esc(t("Закрыть без сохранения?"))}</div><div class="spacer"></div>
+      <button class="btn" data-s="back">${esc(t("Вернуться"))}</button>
+      <button class="btn danger" data-s="discard">${esc(t("Не сохранять"))}</button>`;
+  }
+  return `<div class="fhint${n ? " dirty" : ""}">${n ? esc(t("Есть несохранённые изменения")) : ""}</div>
+    <div class="spacer"></div>
+    <button class="btn primary" data-s="save"${n ? "" : " disabled"}>${esc(t("Сохранить"))}</button>`;
+}
+
+function renderFoot() {
+  const f = $("#sheetFoot");
+  if (f) f.innerHTML = footHtml();
+}
+
+/* Правка не применяется сразу: она копится в draft до нажатия «Сохранить».
+   Если вернули прежнее значение, правка из черновика пропадает. */
+function setDraft(key, val) {
+  const saved = LAST.settings[key];
+  if (String(saved) === String(val)) delete draft[key]; else draft[key] = val;
+  confirmClose = false;
+  renderFoot();
 }
 
 /* Журнал приходит отдельным вызовом из приложения — в состоянии его нет,
@@ -1983,86 +2049,106 @@ window.showLog = function (text) {
   if (box) box.textContent = text;
 };
 
-function openSettings() {
+function openSettings(tab) {
   if (settingsOpen || !LAST) return;
   settingsOpen = true;
+  draft = {};
+  confirmClose = false;
+  if (tab && SHEET_TABS.some(x => x[0] === tab)) sheetTab = tab;
   const host = document.createElement("div");
   host.id = "sheetHost";
   host.innerHTML = sheetHtml(LAST);
   document.querySelector(".shell").appendChild(host);
   wireSheet();
   setCls($("#gear"), "on", true);
-  if (logOpen) api("/api/readLog", {});
+  if (logOpen && sheetTab === "sys") api("/api/readLog", {});
+}
+
+function showSheetTab(id) {
+  if (id === sheetTab) return;
+  sheetTab = id;
+  document.querySelectorAll("#sheetHost .stab").forEach(b => {
+    const on = b.dataset.tab === id;
+    setCls(b, "on", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  document.querySelectorAll("#sheetHost .pane").forEach(p => setCls(p, "act", p.dataset.pane === id));
+  // раскрытое меню остаётся в скрытом разделе — закрываем
+  if (openMenu) { openMenu = null; renderMenus(); }
+  const body = $("#sheetHost .sheetb");
+  if (body) body.scrollTop = 0;
+  if (id === "sys" && logOpen) api("/api/readLog", {});
 }
 
 function wireSheet() {
   const st = LAST.settings;
-  ddInit("ddDefQ", QUALITY, st.defaultQuality || "1080p", v => saveSettings({defaultQuality: v}));
-  ddInit("ddConc", CONC, String(st.maxParallel || 2), v => saveSettings({maxParallel: +v}));
-  ddInit("ddCookie", COOKIES, st.cookieBrowser || "chrome", v => saveSettings({cookieBrowser: v}));
-  ddInit("ddSubs", SUBS, st.subtitles || "none", v => saveSettings({subtitles: v}));
-  ddInit("ddSpeed", SPEED, st.speedLimit || "", v => saveSettings({speedLimit: v}));
-  ddInit("ddOrganize", ORGANIZE, st.organize || "none", v => saveSettings({organize: v}));
-  ddInit("ddCodec", CODEC, st.codec || "h264", v => saveSettings({codec: v}));
-  ddInit("ddLang", LANGS, st.language || "auto", v => {
-    saveSettings({language: v});
-    LAST.settings.language = v;
-    if (applyLang(LAST)) {
-      render(LAST);
-      // смена языка — редкое осознанное действие, панель можно пересобрать
-      const scroll = ($("#sheetHost .sheetb") || {}).scrollTop || 0;
-      closeSettings();
-      setTimeout(() => {
-        openSettings();
-        const b = $("#sheetHost .sheetb");
-        if (b) b.scrollTop = scroll;
-      }, 30);
-    }
-  });
+  const pick = (key, conv) => v => setDraft(key, conv ? conv(v) : v);
+  ddInit("ddDefQ", QUALITY, st.defaultQuality || "1080p", pick("defaultQuality"));
+  ddInit("ddConc", CONC, String(st.maxParallel || 2), pick("maxParallel", v => +v));
+  ddInit("ddCookie", COOKIES, st.cookieBrowser || "chrome", pick("cookieBrowser"));
+  ddInit("ddSubs", SUBS, st.subtitles || "none", pick("subtitles"));
+  ddInit("ddSpeed", SPEED, st.speedLimit || "", pick("speedLimit"));
+  ddInit("ddOrganize", ORGANIZE, st.organize || "none", pick("organize"));
+  ddInit("ddCodec", CODEC, st.codec || "h264", pick("codec"));
+  // язык применится после «Сохранить»: смена языка перерисовывает весь интерфейс
+  ddInit("ddLang", LANGS, st.language || "auto", pick("language"));
+  // плотность и акцент показываем сразу, чтобы видеть результат; не сохранили — вернутся
   ddInit("ddDensity", DENSITY, st.density || (st.compact ? "compact" : "normal"), v => {
-    saveSettings({density: v});
-    LAST.settings.density = v;
+    setDraft("density", v);
     setCls(document.body, "compact", v === "compact");
     setCls(document.body, "list", v === "list");
   });
 
   const tpl = $("#setTemplate");
-  if (tpl) tpl.addEventListener("change", () => saveSettings({
-    filenameTemplate: tpl.value.trim() || "%(title)s [%(id)s].%(ext)s"
-  }));
+  if (tpl) tpl.addEventListener("input", () => setDraft("filenameTemplate", tpl.value.trim() || DEFAULT_TEMPLATE));
+
+  const tablist = $("#sheetHost .stabs");
+  tablist.addEventListener("keydown", e => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const ids = SHEET_TABS.map(x => x[0]);
+    const i = ids.indexOf(sheetTab) + (e.key === "ArrowRight" ? 1 : -1);
+    const next = ids[(i + ids.length) % ids.length];
+    showSheetTab(next);
+    const btn = tablist.querySelector(`[data-tab="${next}"]`);
+    if (btn) btn.focus();
+    e.preventDefault();
+  });
 
   $("#sheetHost").addEventListener("click", e => {
     e.stopPropagation();
+
+    const tab = e.target.closest("[data-tab]");
+    if (tab) { showSheetTab(tab.dataset.tab); return; }
 
     // Переключатель меняем прямо на месте: панель не пересобирается,
     // прокрутка остаётся там, где была.
     const swBtn = e.target.closest("[data-sw]");
     if (swBtn) {
-      const key = swBtn.dataset.sw;
       const val = !swBtn.classList.contains("on");
       swBtn.classList.toggle("on", val);
-      LAST.settings[key] = val;
-      saveSettings({[key]: val});
-      // строку меню и плотность приложение подхватит из состояния само
+      swBtn.setAttribute("aria-checked", val ? "true" : "false");
+      setDraft(swBtn.dataset.sw, val);
       return;
     }
 
     const dot = e.target.closest("[data-acc]");
     if (dot) {
       const c = dot.dataset.acc;
-      LAST.settings.accent = c;
       applyAccent(c);
-      document.querySelectorAll("[data-acc]").forEach(b =>
+      document.querySelectorAll("#sheetHost [data-acc]").forEach(b =>
         b.style.borderColor = b.dataset.acc === c ? "var(--text)" : "transparent");
-      saveSettings({accent: c});
+      setDraft("accent", c);
       return;
     }
 
     const b = e.target.closest("[data-s]");
     if (!b) return;
     const k = b.dataset.s;
-    if (k === "close") closeSettings();
-    else if (k === "choose") api("/api/chooseFolder", {});
+    if (k === "close") requestClose();
+    else if (k === "save") saveSheet();
+    else if (k === "discard") closeSettings(true);
+    else if (k === "back") { confirmClose = false; renderFoot(); }
+    else if (k === "choose") api("/api/chooseFolder", {});     // выбор папки применяется сразу: это отдельное окно системы
     else if (k === "update") { api("/api/updateYtdlp", {}); toast(t("Запустил обновление yt-dlp…")); }
     else if (k === "openlog") api("/api/openLog", {});
     else if (k === "log") {
@@ -2081,9 +2167,36 @@ function wireSheet() {
 const SHEET_DD = ["ddDefQ", "ddConc", "ddCookie", "ddSubs", "ddSpeed", "ddOrganize",
                   "ddCodec", "ddDensity", "ddLang"];
 
-function closeSettings() {
-  const t = $("#setTemplate");
-  if (t) saveSettings({filenameTemplate: t.value.trim() || "%(title)s [%(id)s].%(ext)s"});
+/* «Закрыть» без сохранения: если есть правки, сначала спрашиваем. */
+function requestClose() {
+  if (!settingsOpen) return;
+  if (confirmClose) { confirmClose = false; renderFoot(); return; }
+  if (Object.keys(draft).length) { confirmClose = true; renderFoot(); return; }
+  closeSettings(true);
+}
+
+function saveSheet() {
+  const patch = Object.assign({}, draft);
+  if (!Object.keys(patch).length) { closeSettings(false); return; }
+  saveSettings(patch);
+  Object.assign(LAST.settings, patch);
+  closeSettings(false);
+  if ("language" in patch && applyLang(LAST)) render(LAST);
+  toast(t("Настройки сохранены"));
+}
+
+function closeSettings(revert) {
+  if (revert) {
+    // то, что показывали «вживую», возвращаем как было
+    if ("accent" in draft) applyAccent(LAST.settings.accent);
+    if ("density" in draft) {
+      const v = LAST.settings.density || "normal";
+      setCls(document.body, "compact", v === "compact");
+      setCls(document.body, "list", v === "list");
+    }
+  }
+  draft = {};
+  confirmClose = false;
   settingsOpen = false;
   openMenu = null;
   const h = $("#sheetHost");
@@ -2091,6 +2204,7 @@ function closeSettings() {
   SHEET_DD.forEach(id => delete DD[id]);
   setCls($("#gear"), "on", false);
 }
+
 /* панель настроек не перерисовываем на каждом обновлении состояния,
    иначе выпадающие меню будут закрываться сами */
 function syncSheet(s) {
@@ -2098,18 +2212,20 @@ function syncSheet(s) {
   if (p) setText(p, s.settings.folder);
   const v = $("#sheetHost .ver");
   if (v) setText(v, s.env.ytdlpVersion ? "yt-dlp " + s.env.ytdlpVersion : "");
-  // переключатели подтягиваем из состояния — но не трогаем прокрутку
+  // переключатели подтягиваем из состояния, кроме тех, что правят прямо сейчас
   document.querySelectorAll("#sheetHost [data-sw]").forEach(b => {
+    if (b.dataset.sw in draft) return;
     const on = !!s.settings[b.dataset.sw];
     if (b.classList.contains("on") !== on) b.classList.toggle("on", on);
   });
 }
 
-$("#gear").onclick = e => { e.stopPropagation(); settingsOpen ? closeSettings() : openSettings(); };
+$("#gear").onclick = e => { e.stopPropagation(); settingsOpen ? requestClose() : openSettings(); };
 
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") { if (openMenu) { openMenu = null; renderMenus(); } else if (settingsOpen) closeSettings(); }
-  if ((e.metaKey || e.ctrlKey) && e.key === ",") { e.preventDefault(); settingsOpen ? closeSettings() : openSettings(); }
+  if (e.key === "Escape") { if (openMenu) { openMenu = null; renderMenus(); } else if (settingsOpen) requestClose(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === ",") { e.preventDefault(); settingsOpen ? requestClose() : openSettings(); }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s" && settingsOpen) { e.preventDefault(); saveSheet(); }
 });
 
 /* ---------------- мастер первого запуска ---------------- */

@@ -19,7 +19,7 @@ T = [thumb("#5B8DEF","#8E5BEF"), thumb("#F2994A","#EB5757"), thumb("#27AE60","#2
 def settings(**kw):
     s = dict(onboarded=True, theme="light", density="normal", accent="#007AFF", language="ru",
              folder="/Users/demo/Movies/YTLoader", defaultQuality="1080p", maxParallel="3",
-             speedLimit="", organize="channel", codec="any", cookieBrowser="none",
+             speedLimit="", organize="channel", codec="h264", cookieBrowser="none",
              filenameTemplate="%(title)s [%(id)s].%(ext)s", subtitles="ru,en", subsEmbed=True,
              chapters=True, sponsorblock=True, wifiOnly=False, autoResume=True, clipboardWatch=True,
              autoUpdate=True, notify=True, dockBadge=True, menuBar=True)
@@ -97,17 +97,14 @@ with sync_playwright() as p:
     # 1. очередь — главный экран
     pg = new(); apply(pg, state(items)); fit_list(pg); shot(pg, "01-queue")
 
-    # 2. настройки — панель целиком; высота подобрана так, чтобы прокрутка
-    #    обрывалась на границе блока, а не посреди строки
-    pg = new(900); apply(pg, state(items)); pg.add_style_tag(content=HIDE_BG)
+    # 2. настройки — окно целиком: вкладка «Загрузка» (светлая) и «Оформление» (тёмная)
+    pg = new(760); apply(pg, state(items)); pg.add_style_tag(content=HIDE_BG)
     pg.click("#gear"); pg.wait_for_timeout(700)
-    need = pg.evaluate("""() => {
-      const body = document.querySelector('.sheetb');
-      const g = [...document.querySelectorAll('.sheetb .group')].find(x => x.textContent.includes('спонсорские'));
-      return Math.ceil(g.getBoundingClientRect().bottom - body.getBoundingClientRect().top + body.scrollTop + 12);
-    }""")
-    pg.set_viewport_size(dict(width=W, height=need + 104)); pg.wait_for_timeout(600)
     pg.locator(".sheet").screenshot(path=f"{OUT}/02-settings.png")
+
+    pg = new(760); apply(pg, state(items, settings=settings(theme="dark"))); pg.add_style_tag(content=HIDE_BG)
+    pg.click("#gear"); pg.click('[data-tab="look"]'); pg.wait_for_timeout(700)
+    pg.locator(".sheet").screenshot(path=f"{OUT}/06-settings-appearance.png")
 
     # 3. история
     pg = new(); apply(pg, state(items)); pg.click("#tabHistory"); pg.wait_for_timeout(400)

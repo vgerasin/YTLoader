@@ -1,7 +1,7 @@
 name: CI
 
 # Собирает оболочку для Apple Silicon + Intel, гоняет тесты
-# и кладёт журналы в ветку ci-logs (журналы Actions снаружи не видны).
+# и кладёт журналы и снимки окна в ветку ci-logs.
 on:
   push:
     branches: [rewrite-host, main]
