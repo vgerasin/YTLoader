@@ -80,7 +80,7 @@ public final class Item: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, url, title, channel, thumb, duration, status, stage, pct, total, downloaded
-        case speed, eta, quality, format, streams, error, rawError, errorKind, noCookies
+        case quality, format, streams, error, rawError, errorKind, noCookies
         case groupId, groupTitle, groupTotal, deferMode, deferTime, deferAt, autoDeferred
         case filepath, added, audioOnly, sectionFrom, sectionTo, site, key, isEntry, attempts
         case updateRetried, tempFiles, resolved

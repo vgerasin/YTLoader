@@ -258,6 +258,9 @@ public enum Loc {
             "ru": "Ничего не качается", "de": "Nichts wird heruntergeladen",
             "fr": "Aucun téléchargement en cours", "es": "No hay descargas en curso",
         ],
+        "Network": ["ru": "Сеть", "de": "Netzwerk", "fr": "Réseau", "es": "Red"],
+        "Hotspot": ["ru": "Точка доступа", "de": "Hotspot", "fr": "Point d’accès", "es": "Punto de acceso"],
+        "Cellular": ["ru": "Сотовая сеть", "de": "Mobilfunk", "fr": "Cellulaire", "es": "Móvil"],
         "Choose": ["ru": "Выбрать", "de": "Wählen", "fr": "Choisir", "es": "Elegir"],
         "Download folder": [
             "ru": "Папка для загрузок", "de": "Ordner für Downloads",

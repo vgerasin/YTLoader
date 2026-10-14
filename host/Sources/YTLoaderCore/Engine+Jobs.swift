@@ -126,7 +126,7 @@ extension Engine {
         if let t = e["title"] as? String, !t.isEmpty { it.title = t }
         it.channel = (e["channel"] as? String) ?? (e["uploader"] as? String) ?? ""
         it.thumb = Engine.thumbnail(of: e)
-        it.duration = Engine.number(e["duration"])
+        it.duration = jsonNum(Engine.number(e["duration"]))
         if let u = url { it.url = u }
 
         // Что будем качать: дорожки и их примерный размер — для составной полосы прогресса.
@@ -179,7 +179,7 @@ extension Engine {
             let child = Item(url: url, title: (e["title"] as? String) ?? Sites.host(of: url))
             child.channel = (e["channel"] as? String) ?? (e["uploader"] as? String) ?? (json["uploader"] as? String) ?? ""
             child.thumb = Engine.thumbnail(of: e)
-            child.duration = Engine.number(e["duration"])
+            child.duration = jsonNum(Engine.number(e["duration"]))
             child.groupId = gid
             child.groupTitle = title
             child.audioOnly = it.audioOnly

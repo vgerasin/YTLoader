@@ -23,7 +23,6 @@ public struct EngineSummary {
 /// Всё, что движок сообщает окну. Вызывается в главном потоке.
 public protocol EngineDelegate: AnyObject {
     func engine(push json: String, summary: EngineSummary)
-    func engine(toast text: String)
     func engine(notifyTitle: String, body: String, path: String)
     func engine(askDuplicate payload: [String: Any])
 }
