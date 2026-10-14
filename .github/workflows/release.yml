@@ -1,8 +1,9 @@
 name: Release DMG
 
-# Собирает DMG на macOS-раннере GitHub и выкладывает его в Releases.
+# Собирает DMG на macOS-раннере GitHub (универсальный и Intel), выкладывает их в Releases
+# и обновляет готовые образы в папке downloads/.
 # Запуск: вкладка Actions → «Release DMG» → Run workflow,
-# либо git tag v4.7 && git push origin v4.7
+# либо  git tag v5.0 && git push origin v5.0
 
 on:
   push:
@@ -18,8 +19,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Собрать DMG
-        run: make dmg
+      - name: Тесты оболочки
+        working-directory: host
+        run: swift test
+
+      - name: Собрать универсальный DMG (Apple Silicon + Intel)
+        run: ./scripts/build-dmg.sh
+
+      - name: Собрать DMG только для Intel
+        run: ./scripts/build-dmg.sh --arch x86_64
+
+      - name: Проверить образы
+        run: |
+          ls -la dist
+          lipo -archs build/universal/YTLoader.app/Contents/MacOS/YTLoader
+          lipo -archs build/x86_64/YTLoader.app/Contents/MacOS/YTLoader
+          lipo -archs build/universal/YTLoader.app/Contents/Resources/bin/yt-dlp || true
 
       - name: Приложить DMG к запуску
         uses: actions/upload-artifact@v4
@@ -33,17 +48,39 @@ jobs:
         run: |
           VERSION="$(tr -d '[:space:]' < VERSION)"
           TAG="v$VERSION"
-          SHA="$(shasum -a 256 dist/YTLoader-$VERSION.dmg | cut -d' ' -f1)"
+          UNI="dist/YTLoader-$VERSION.dmg"
+          INTEL="dist/YTLoader-$VERSION-intel.dmg"
+          SHA_UNI="$(shasum -a 256 "$UNI" | cut -d' ' -f1)"
+          SHA_INTEL="$(shasum -a 256 "$INTEL" | cut -d' ' -f1)"
           cat > notes.md <<NOTES
-          Для Mac на Apple Silicon, macOS 12 и новее.
+          **YTLoader-$VERSION.dmg** — универсальный образ: Apple Silicon (M1 и новее) и Intel, macOS 12 и новее.
+          **YTLoader-$VERSION-intel.dmg** — то же приложение только для Intel-маков (вдвое меньше).
 
           Приложение подписано без аккаунта разработчика: при первом запуске нажмите правой кнопкой → «Открыть».
 
-          SHA-256: \`$SHA\`
+          SHA-256:
+          - \`$SHA_UNI\` — YTLoader-$VERSION.dmg
+          - \`$SHA_INTEL\` — YTLoader-$VERSION-intel.dmg
           NOTES
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "dist/YTLoader-$VERSION.dmg" --clobber
+            gh release upload "$TAG" "$UNI" "$INTEL" --clobber
           else
-            gh release create "$TAG" "dist/YTLoader-$VERSION.dmg" \
+            gh release create "$TAG" "$UNI" "$INTEL" \
               --title "YTLoader $VERSION" --notes-file notes.md --target "$GITHUB_SHA"
+          fi
+
+      - name: Обновить готовые образы в downloads/
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git switch -C main origin/main
+          rm -f downloads/*.dmg downloads/*.sha256 downloads/SHA256SUMS
+          mkdir -p downloads
+          cp dist/*.dmg downloads/
+          (cd downloads && shasum -a 256 *.dmg > SHA256SUMS)
+          git add downloads
+          if git diff --cached --quiet; then echo "без изменений"; else
+            git commit -m "Образы $(tr -d '[:space:]' < VERSION) в downloads/"
+            git push origin main
           fi

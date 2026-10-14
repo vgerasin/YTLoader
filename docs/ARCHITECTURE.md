@@ -2,7 +2,7 @@
 
 ```
 YTLoader.app
-├── Contents/MacOS/YTLoader          Swift-оболочка (host): окно, очередь, процессы, система
+├── Contents/MacOS/YTLoader          Swift-оболочка (host/): окно, очередь, процессы, система (arm64 + x86_64)
 ├── Contents/Resources/ui.html       весь интерфейс: один файл HTML/CSS/JS
 ├── Contents/Resources/bin/yt-dlp    универсальный бинарник (arm64 + x86_64)
 ├── Contents/Resources/AppIcon.icns
@@ -83,11 +83,39 @@ window.toast("текст");      // короткое уведомление вн
 Тексты интерфейса — русские строки, переводы лежат в объекте `I18N` в начале скрипта
 (ключ — русская строка; нет перевода — показывается сама строка).
 
-**Нужна поддержка оболочки** (новая команда `/api/…`, новое поле снимка, новый флаг yt-dlp) —
-нужны исходники Swift-части, см. [host/README.md](../host/README.md).
+**Нужна поддержка оболочки** (новая команда `/api/…`, новое поле снимка, новый флаг yt-dlp):
+
+1. Команда: добавьте ветку в `Engine.handle(path:body:)` (`host/Sources/YTLoaderCore/Engine.swift`),
+   если она про очередь, или в `userContentController(_:didReceive:)` (`host/Sources/YTLoader/AppDelegate.swift`),
+   если ей нужны окно или система (диалоги, Finder).
+2. Новое поле загрузки: `Item` (`Models.swift`) — свойство, ключ в `CodingKeys`, строка в `uiJSON()`.
+3. Новая настройка: `Settings.swift` — свойство, ключ в `CodingKeys`/`init(from:)`, ветка в `apply(patch:)`, строка в `uiJSON`.
+4. Флаг yt-dlp: `ArgsBuilder.downloadArgs` — и тест в `Tests/YTLoaderCoreTests/ArgsTests.swift`.
+5. Проверка: `make test` на Mac или push в ветку — CI соберёт и прогонит тесты (журналы в ветке `ci-logs`).
+
+## Другие сайты
+
+Приложение принимает любую http(s)-ссылку: разбор и загрузку делает yt-dlp, а он умеет больше тысячи сайтов.
+Список в `Sites.swift` нужен только для удобства: подсказка из буфера обмена, подпись «откуда» на карточке,
+ключ ролика для поиска дублей (`youtu.be/ID` = `watch?v=ID`, `vk.com/video-1_2`, `rutube.ru/video/<hash>/`, …).
+Чтобы добавить сайт, допишите его в `Sites.known` (имя и домены) — и, если у него особый адрес видео, правило в `Sites.videoKey`.
+Приёмы, специфичные для YouTube (`player_client`, SponsorBlock, JS-проверка), включаются только для его адресов.
+
+## Как работает очередь
+
+- Состояние живёт в `Engine` и меняется только в его последовательной очереди; окно получает снимок
+  (`window.applyState`) не чаще ~2,5 раза в секунду и только если что-то изменилось.
+- Добавленная ссылка сначала получает статус `resolving`: `yt-dlp -J --flat-playlist -f <формат>` возвращает название, превью,
+  длительность и список дорожек с размерами. Плейлист или канал заменяется группой карточек (до 500 роликов).
+- Затем планировщик (тик 0,4 с) запускает загрузки, пока их меньше «Одновременно». Процесс `yt-dlp` печатает прогресс по шаблону
+  (`ArgsBuilder.progressTemplate`), `ProgressTracker` складывает его в общую полосу из участков по дорожкам.
+- Пауза — `SIGINT`: yt-dlp оставляет `.part`, продолжение докачивает. Отмена удаляет недокачанное.
+- Сбой разбирает `ErrorClassifier`; часть случаев чинится сама: cookies не читаются → повтор без них,
+  403 / «unable to extract» → обновление yt-dlp и повтор, сетевая ошибка → до трёх повторов с паузой.
+- Очередь, история и настройки сохраняются в `~/Library/Application Support/YTLoader/*.json`, журнал — в `~/Library/Logs/YTLoader/`.
 
 ## Сборка новой версии
 
-1. Поднять номер в файле `VERSION`.
-2. На Mac: `make dmg` → `dist/YTLoader-<версия>.dmg`.
-3. Записать изменения в `CHANGELOG.md`, выложить DMG в GitHub Releases.
+1. Поднять номер в файле `VERSION`, записать изменения в `CHANGELOG.md`.
+2. На Mac: `make dmg` → `dist/YTLoader-<версия>.dmg` (универсальный), `make dmg-intel` → `…-intel.dmg`.
+   Либо на GitHub: **Actions → Release DMG → Run workflow** — обе сборки, релиз и обновление `downloads/` делаются сами.

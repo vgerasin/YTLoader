@@ -109,7 +109,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         cfg.userContentController.add(WeakScriptHandler(self), name: "ytl")
         web = WKWebView(frame: .zero, configuration: cfg)
         web.navigationDelegate = self
-        web.setValue(false, forKey: "drawsBackground")
 
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 760),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable],

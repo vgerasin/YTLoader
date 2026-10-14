@@ -3,13 +3,14 @@
 <h1 align="center">YTLoader</h1>
 
 <p align="center">Менеджер загрузок для macOS поверх <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a>:<br>
-вставил ссылки — получил видео или MP3. Без браузера и терминала.</p>
+вставил ссылки — получил видео или MP3. YouTube, VK, Rutube, Vimeo и другие сайты. Без браузера и терминала.</p>
 
 <p align="center"><img src="docs/screenshots/01-queue.png" width="640" alt="Очередь загрузок"></p>
 
 ## Что умеет
 
 **Загрузка**
+- **Не только YouTube**: VK (и vkvideo.ru), Rutube, Vimeo, Dailymotion, Twitch, TikTok, OK, Dzen, Bilibili, SoundCloud и всё остальное, что умеет yt-dlp, — достаточно вставить ссылку.
 - Ссылки пачкой, по одной в строке. Плейлист или канал целиком разворачивается сам и показывается одной сворачиваемой группой с общим прогрессом.
 - Видео (до 4K, а также 1440p / 1080p / 720p / 480p) или только звук в MP3.
 - **Фрагмент** — скачать кусок ролика, указав «от» и «до».
@@ -32,9 +33,9 @@
 - **История** с поиском по названию и каналу, «Показать в Finder» и «Скачать снова».
 
 **Устойчивость**
-- Cookies из Chrome, Firefox, Safari, Edge или Brave — для приватных и возрастных видео. Если YouTube отверг cookies, приложение пробует ещё раз без них.
+- Cookies из Chrome, Firefox, Safari, Edge или Brave — для приватных и возрастных видео. Если cookies не удалось прочитать, приложение пробует ещё раз без них.
 - Понятные сообщения вместо сырых ошибок yt-dlp: 403, проверка «вы не робот», приватное видео, устаревший yt-dlp.
-- yt-dlp обновляется сам — раз в неделю и сразу после отказа YouTube; есть кнопка ручного обновления.
+- yt-dlp обновляется сам — раз в неделю и сразу после отказа сайта; есть кнопка ручного обновления.
 - Журнал и диагностика: что найдено на машине (yt-dlp, ffmpeg, ffprobe, JS-движок) прямо в настройках.
 
 **Оформление и система**
@@ -65,8 +66,9 @@
 
 ## Установка
 
-1. Скачайте **[YTLoader-4.6.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-4.6.dmg)** (37 МБ).
-   Контрольная сумма SHA-256 — в файле [downloads/YTLoader-4.6.dmg.sha256](downloads/YTLoader-4.6.dmg.sha256).
+1. Скачайте **[YTLoader-5.0.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.0.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
+   Только для Intel есть образ поменьше: **[YTLoader-5.0-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.0-intel.dmg)**.
+   Контрольные суммы SHA-256 — в файле [downloads/SHA256SUMS](downloads/SHA256SUMS).
 2. Откройте DMG и перетащите YTLoader в «Программы».
 3. Первый запуск: приложение подписано без аккаунта разработчика Apple, поэтому macOS может его не открыть.
    Нажмите на нём правой кнопкой → «Открыть» → «Открыть» (или в «Системных настройках → Конфиденциальность и безопасность» нажмите «Всё равно открыть»).
@@ -81,42 +83,46 @@
 ```bash
 git clone https://github.com/vgerasin/YTLoader.git
 cd YTLoader
-make dmg          # → dist/YTLoader-<версия>.dmg
+make dmg          # универсальный (Apple Silicon + Intel) → dist/YTLoader-<версия>.dmg
+make dmg-intel    # только Intel → dist/YTLoader-<версия>-intel.dmg
 ```
 
-**Требования:** macOS 12 или новее, Mac на Apple Silicon (текущая сборка оболочки — только arm64; yt-dlp внутри универсальный).
+**Требования:** macOS 12 или новее; Mac на Apple Silicon или Intel.
 
 ## Для разработки
 
 ```
 app/            интерфейс (ui.html), иконка, шаблон Info.plist
-host/           Swift-оболочка: пока только готовый бинарник (см. host/README.md)
+host/           Swift-оболочка: очередь, yt-dlp, окно, Dock, тесты (см. host/README.md)
 scripts/        build-dmg.sh — сборка .app и DMG
 tools/          screenshots.py — отрисовка скриншотов интерфейса без Mac
 docs/           архитектура и скриншоты
-downloads/      готовый DMG текущей версии и его контрольная сумма
+downloads/      готовые DMG текущей версии (универсальный и Intel) и контрольные суммы
 .github/        автосборка DMG и публикация релиза (Actions)
 VERSION         номер версии, подставляется в Info.plist и имя DMG
 ```
 
 ```bash
-make dmg          # на Mac: dist/YTLoader-<версия>.dmg
+make dmg          # на Mac: универсальный dist/YTLoader-<версия>.dmg
+make dmg-intel    # отдельный образ только для Intel
 make app          # только build/YTLoader.app
+make test         # тесты оболочки
+make run          # запустить из исходников
 make screenshots  # обновить docs/screenshots (python3 + playwright)
 ```
 
 ### Выпуск новой версии
 
 1. Поднимите номер в `VERSION` и допишите `CHANGELOG.md`, закоммитьте.
-2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v4.7 && git push origin v4.7`).
-   GitHub соберёт DMG на macOS и выложит его в Releases.
+2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v5.1 && git push origin v5.1`).
+   GitHub соберёт оба DMG на macOS, выложит их в Releases и обновит папку `downloads/`.
 
 Как устроен мост между интерфейсом и оболочкой и как добавлять функции — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Ответственность
 
 YTLoader — инструмент для сохранения материалов, на которые у вас есть права или разрешение
-(собственные ролики, лицензии с разрешением на скачивание, личный архив). Соблюдайте условия использования YouTube и законы вашей страны.
+(собственные ролики, лицензии с разрешением на скачивание, личный архив). Соблюдайте условия использования сайтов, с которых скачиваете, и законы вашей страны.
 
 ## Лицензия
 

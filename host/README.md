@@ -1,18 +1,46 @@
 # Оболочка (host)
 
-`prebuilt/YTLoader-arm64` — скомпилированная Swift-оболочка приложения (только Apple Silicon, macOS 12+).
-Она открывает окно с `app/Resources/ui.html`, запускает `yt-dlp`/`ffmpeg`, держит очередь и историю,
-следит за сетью, буфером обмена, Dock и строкой меню, и по мосту `window.webkit.messageHandlers.ytl`
-обменивается с интерфейсом (см. [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)).
+Нативная часть приложения на Swift: окно с `app/Resources/ui.html`, очередь загрузок, запуск `yt-dlp`/`ffmpeg`,
+сеть, буфер обмена, Dock, строка меню, уведомления. Исходники написаны заново по описанию моста
+из [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) (версия 5.0).
 
-## Важно
+```
+Package.swift
+Sources/
+  YTLoaderCore/        вся логика, без AppKit — собирается и тестируется отдельно
+    Settings.swift       настройки (settings.json), патч от интерфейса, снимок для UI
+    Models.swift         Item (загрузка), HistoryEntry, StreamInfo
+    Sites.swift          сайты (YouTube, VK, Rutube, Vimeo, …), поиск ссылок в тексте, ключ ролика для дублей
+    ArgsBuilder.swift    строка запуска yt-dlp: формат, папки, cookies, SponsorBlock, субтитры, фрагмент
+    ProgressParser.swift разбор вывода yt-dlp и общий прогресс по дорожкам
+    ErrorClassifier.swift ошибка yt-dlp → понятное сообщение на языке интерфейса
+    Components.swift     поиск, установка и обновление yt-dlp / ffmpeg / ffprobe / deno (arm64 и Intel)
+    Engine*.swift        очередь: добавление, разбор ссылок и плейлистов, планировщик, пауза, отложенный старт
+    Loc.swift            тексты оболочки: ru, en, de, fr, es
+    Store.swift, Paths.swift, Util.swift
+  YTLoader/            оболочка AppKit
+    AppDelegate.swift    окно, WKWebView и мост, меню, сеть, буфер обмена, уведомления, ytloader://
+    StatusBarController.swift  значок в строке меню
+    DockController.swift       цвет значка и полоса прогресса в Dock
+Tests/YTLoaderCoreTests/  модульные и сквозные тесты (настоящий yt-dlp + локальный сервер)
+```
 
-Исходного кода Swift-части в репозитории **пока нет** — приложение было собрано в одном из прошлых чатов,
-исходники не сохранились. Поэтому сейчас:
+## Сборка и тесты (на Mac)
 
-- **Интерфейс (`ui.html`) можно менять свободно** — это обычный HTML/CSS/JS, пересборка DMG занимает секунды.
-- **Новое поведение, которое требует Swift** (новые команды `/api/...`, новые поля состояния,
-  другие флаги yt-dlp, Intel-сборка) без исходников не добавить: готовый бинарник пересобрать нельзя.
+```bash
+cd host
+swift build -c release --arch arm64 --arch x86_64    # универсальный бинарник
+swift test                                           # модульные тесты
+YTL_E2E=1 swift test                                 # + сквозные (нужны yt-dlp и по желанию ffmpeg)
+```
 
-Когда появятся исходники (или Swift-часть будет написана заново по описанию моста), положите их в
-`host/Sources/` и поменяйте `HOST=` в `scripts/build-dmg.sh` на путь к собранному бинарнику.
+Из корня репозитория: `make test`, `make run` (запуск из исходников), `make dmg` (универсальный образ),
+`make dmg-intel` (только Intel).
+
+Сквозным тестам нужен `yt-dlp` в PATH-каталоге из переменной `YTL_EXTRA_BIN` (или в `~/Library/Application Support/YTLoader/bin`),
+для проверок склейки, MP3 и фрагмента — ещё `ffmpeg`. Без ffmpeg эти тесты пропускаются.
+
+## CI
+
+`.github/workflows/ci.yml` на каждый push собирает оболочку под обе архитектуры и гоняет все тесты на macOS.
+Журналы кладутся в ветку `ci-logs` (папка `latest/`), потому что журналы Actions снаружи не всегда доступны.

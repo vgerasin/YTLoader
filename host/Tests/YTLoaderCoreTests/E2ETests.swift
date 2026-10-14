@@ -61,16 +61,22 @@ final class E2ETests: XCTestCase {
         try XCTSkipUnless(ProcessInfo.processInfo.environment["YTL_E2E"] == "1", "set YTL_E2E=1")
     }
 
-    private func wait(_ what: String, timeout: TimeInterval = 90, _ cond: () -> Bool) {
+    struct Timeout: Error, CustomStringConvertible {
+        let what: String
+        var description: String { "timeout waiting for: \(what)" }
+    }
+
+    /// Ждёт условие, обрабатывая главную очередь (делегат движка получает снимки именно там).
+    private func wait(_ what: String, timeout: TimeInterval = 90, _ cond: () -> Bool) throws {
         let end = Date().addingTimeInterval(timeout)
         while Date() < end {
             if cond() { return }
-            Thread.sleep(forTimeInterval: 0.2)
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
-        XCTFail("timeout waiting for: \(what)")
+        throw Timeout(what: what)
     }
 
-    private func makeEngine(folder: String) -> (Engine, Collector) {
+    private func makeEngine(folder: String) throws -> (Engine, Collector) {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("ytl-root-" + UUID().uuidString)
         AppPaths.overrideRoot = root
         let c = Collector()
@@ -80,7 +86,7 @@ final class E2ETests: XCTestCase {
                                                "language": "en", "notify": true, "cookieBrowser": "none"])
         let tools = Components.detect()
         XCTAssertTrue(tools.hasYtdlp, "yt-dlp must be installed for E2E tests")
-        wait("tools detected") { (c.last["env"] as? [String: Any])?["ytdlp"] as? Bool == true }
+        try wait("tools detected") { (c.last["env"] as? [String: Any])?["ytdlp"] as? Bool == true }
         return (e, c)
     }
 
@@ -93,13 +99,13 @@ final class E2ETests: XCTestCase {
     func testPlainFileDownloadWithProgressAndDuplicates() throws {
         try requireE2E()
         let folder = tempFolder()
-        let (e, c) = makeEngine(folder: folder)
+        let (e, c) = try makeEngine(folder: folder)
         e.handle(path: "/api/settings", body: ["speedLimit": "1M"])
         let url = "http://127.0.0.1:\(E2ETests.port)/sample.mp4"
         e.handle(path: "/api/add", body: ["text": url, "quality": "720p", "audioOnly": false])
 
-        wait("item shows up") { !c.items.isEmpty }
-        wait("download finished") { c.history.count == 1 && c.items.isEmpty }
+        try wait("item shows up") { !c.items.isEmpty }
+        try wait("download finished") { c.history.count == 1 && c.items.isEmpty }
 
         let h = c.history[0]
         let path = h["filepath"] as? String ?? ""
@@ -117,7 +123,7 @@ final class E2ETests: XCTestCase {
 
         // повторная ссылка: приложение спрашивает про дубль
         e.handle(path: "/api/add", body: ["text": url])
-        wait("duplicate question") { !c.dups.isEmpty }
+        try wait("duplicate question") { !c.dups.isEmpty }
         let dup = (c.dups[0]["duplicates"] as? [[String: Any]])?.first
         XCTAssertEqual(dup?["path"] as? String, path)
 
@@ -125,42 +131,42 @@ final class E2ETests: XCTestCase {
         var forced = c.dups[0]
         forced["force"] = true
         e.handle(path: "/api/add", body: forced)
-        wait("second download") { c.history.count == 2 }
+        try wait("second download") { c.history.count == 2 }
         e.shutdown()
     }
 
     func testMissingFileBecomesFriendlyError() throws {
         try requireE2E()
-        let (e, c) = makeEngine(folder: tempFolder())
+        let (e, c) = try makeEngine(folder: tempFolder())
         e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/nope.mp4"])
-        wait("error state") { c.items.first?["status"] as? String == "error" }
+        try wait("error state") { c.items.first?["status"] as? String == "error" }
         let item = c.items[0]
         XCTAssertFalse((item["error"] as? String ?? "").isEmpty)
         XCTAssertFalse((item["rawError"] as? String ?? "").isEmpty)
 
         // «Убрать» удаляет карточку
         e.handle(path: "/api/cancel", body: ["id": item["id"] as Any])
-        wait("removed") { c.items.isEmpty }
+        try wait("removed") { c.items.isEmpty }
         e.shutdown()
     }
 
     func testPauseResumeAndCancel() throws {
         try requireE2E()
-        let (e, c) = makeEngine(folder: tempFolder())
+        let (e, c) = try makeEngine(folder: tempFolder())
         e.handle(path: "/api/settings", body: ["speedLimit": "1M"])
         let url = "http://127.0.0.1:\(E2ETests.port)/sample.mp4"
         e.handle(path: "/api/add", body: ["text": url, "deferMode": "manual"])
-        wait("deferred") { c.items.first?["status"] as? String == "deferred" }
+        try wait("deferred") { c.items.first?["status"] as? String == "deferred" }
         let id = c.items[0]["id"] as? String ?? ""
         XCTAssertEqual(c.items[0]["deferMode"] as? String, "manual")
 
         e.handle(path: "/api/resume", body: ["id": id])
-        wait("downloading or done") { c.items.first?["status"] as? String == "downloading" || !c.history.isEmpty }
+        try wait("downloading or done") { c.items.first?["status"] as? String == "downloading" || !c.history.isEmpty }
         e.handle(path: "/api/pause", body: ["id": id])
-        wait("paused or done") { c.items.first?["status"] as? String == "paused" || !c.history.isEmpty }
+        try wait("paused or done") { c.items.first?["status"] as? String == "paused" || !c.history.isEmpty }
         if c.items.first?["status"] as? String == "paused" {
             e.handle(path: "/api/resume", body: ["id": id])
-            wait("finished after resume") { !c.history.isEmpty && c.items.isEmpty }
+            try wait("finished after resume") { !c.history.isEmpty && c.items.isEmpty }
         }
         e.shutdown()
     }
@@ -169,13 +175,13 @@ final class E2ETests: XCTestCase {
         try requireE2E()
         let tools = Components.detect()
         try XCTSkipUnless(tools.hasFFmpeg, "ffmpeg is not installed")
-        let (e, c) = makeEngine(folder: tempFolder())
+        let (e, c) = try makeEngine(folder: tempFolder())
         e.handle(path: "/api/settings", body: ["speedLimit": "", "maxParallel": 1])
         e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/hls/master.m3u8", "quality": "1080p"])
-        wait("resolved with streams") {
+        try wait("resolved with streams") {
             (c.items.first?["streams"] as? [[String: Any]])?.count == 2 || !c.history.isEmpty
         }
-        wait("done") { c.history.count == 1 && c.items.isEmpty }
+        try wait("done") { c.history.count == 1 && c.items.isEmpty }
         let path = c.history[0]["filepath"] as? String ?? ""
         XCTAssertTrue(path.hasSuffix(".mp4"), path)
         XCTAssertTrue(FileManager.default.fileExists(atPath: path))
@@ -185,9 +191,9 @@ final class E2ETests: XCTestCase {
     func testAudioOnlyProducesMP3() throws {
         try requireE2E()
         try XCTSkipUnless(Components.detect().hasFFmpeg, "ffmpeg is not installed")
-        let (e, c) = makeEngine(folder: tempFolder())
+        let (e, c) = try makeEngine(folder: tempFolder())
         e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/sample.mp4", "audioOnly": true])
-        wait("done") { c.history.count == 1 && c.items.isEmpty }
+        try wait("done") { c.history.count == 1 && c.items.isEmpty }
         let path = c.history[0]["filepath"] as? String ?? ""
         XCTAssertTrue(path.hasSuffix(".mp3"), path)
         XCTAssertEqual(c.history[0]["format"] as? String, "mp3")
@@ -197,10 +203,10 @@ final class E2ETests: XCTestCase {
     func testSectionCut() throws {
         try requireE2E()
         try XCTSkipUnless(Components.detect().hasFFmpeg, "ffmpeg is not installed")
-        let (e, c) = makeEngine(folder: tempFolder())
+        let (e, c) = try makeEngine(folder: tempFolder())
         e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/sample.mp4",
                                           "sectionFrom": "00:00:01", "sectionTo": "00:00:03"])
-        wait("done or error") { c.history.count == 1 || c.items.first?["status"] as? String == "error" }
+        try wait("done or error") { c.history.count == 1 || c.items.first?["status"] as? String == "error" }
         XCTAssertEqual(c.history.count, 1, "section download failed: \(c.items)")
         e.shutdown()
     }
