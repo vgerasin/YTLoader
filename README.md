@@ -47,25 +47,21 @@
 
 <table>
 <tr>
-<td><img src="docs/screenshots/07-quality-menu.png" alt="Выбор качества"><br><sub>Выбор качества — до 4K</sub></td>
-<td><img src="docs/screenshots/06-settings.png" alt="Настройки"><br><sub>Настройки</sub></td>
+<td><img src="docs/screenshots/03-history.png" alt="История"><br><sub>История с поиском</sub></td>
+<td><img src="docs/screenshots/04-deferred.png" alt="Отложенные"><br><sub>Отложенные: ждут Wi-Fi или расписание</sub></td>
 </tr>
+</table>
+
+<table>
 <tr>
-<td><img src="docs/screenshots/04-history.png" alt="История"><br><sub>История с поиском</sub></td>
-<td><img src="docs/screenshots/05-deferred.png" alt="Отложенные"><br><sub>Отложенные: Wi-Fi и расписание</sub></td>
-</tr>
-<tr>
-<td><img src="docs/screenshots/08-clip-range.png" alt="Фрагмент"><br><sub>Загрузка фрагмента ролика</sub></td>
-<td><img src="docs/screenshots/09-dense-list-accent.png" alt="Плотный список"><br><sub>Плотный список и свой акцентный цвет</sub></td>
-</tr>
-<tr>
-<td><img src="docs/screenshots/03-empty-dropzone.png" alt="Пустая очередь"><br><sub>Пустая очередь — зона для ссылок</sub></td>
-<td><img src="docs/screenshots/11-onboarding-2.png" alt="Мастер первого запуска"><br><sub>Мастер первого запуска</sub></td>
+<td align="center"><img src="docs/screenshots/02-settings.png" width="360" alt="Настройки"><br><sub>Настройки</sub></td>
+<td align="center"><img src="docs/screenshots/05-onboarding.png" width="360" alt="Мастер первого запуска"><br><sub>Мастер первого запуска</sub></td>
 </tr>
 </table>
 
 > Скриншоты — это настоящий файл интерфейса `app/Resources/ui.html`, отрисованный на вымышленных данных
 > (названия роликов и пути придуманы), поэтому в них нет рамки системного окна macOS.
+> Обновить их можно командой `make screenshots`.
 
 ## Установка
 

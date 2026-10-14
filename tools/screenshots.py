@@ -50,12 +50,6 @@ items = [
          pct=100, total=int(430*MB), downloaded=int(430*MB), duration=1980, thumb=T[3],
          streams=[dict(kind="video", total=int(400*MB), done=int(400*MB)), dict(kind="audio", total=int(30*MB), done=int(30*MB))]),
     item(4, title="Planning your week: a 15-minute method", channel="Deep Work Studio", status="queued", duration=905, thumb=T[1]),
-    item(5, title="Урок 1. Введение", channel="Плейлист «Основы SQL»", status="downloading", pct=34, total=int(210*MB), downloaded=int(71*MB),
-         speed=int(5.2*MB), eta=27, duration=1260, thumb=T[4], groupId="pl1", groupTitle="Основы SQL — 12 уроков", groupTotal=12,
-         streams=[dict(kind="video", total=int(190*MB), done=int(71*MB), active=True), dict(kind="audio", total=int(20*MB), done=0, estimated=True)]),
-    item(6, title="Урок 2. SELECT и фильтры", channel="Плейлист «Основы SQL»", status="queued", duration=1410, thumb=T[4], groupId="pl1", groupTitle="Основы SQL — 12 уроков", groupTotal=12),
-    item(8, title="Закрытая лекция (приватное видео)", channel="youtube.com", status="error",
-         error="Приватное видео. Нужны cookies из браузера, где вы вошли в аккаунт.", rawError="", thumb=""),
 ]
 deferred = [
     item(20, title="Большой документальный фильм в 4K", channel="Doc Archive", status="deferred", deferMode="wifi", quality="best", duration=5400, thumb=T[1]),
@@ -77,36 +71,57 @@ def apply(page, s):
     page.evaluate("s => window.applyState(s)", s)
     page.wait_for_timeout(500)
 
+W = 960
+
+def fit_list(pg, min_h=0):
+    """Высота окна = ровно до конца списка, без обрезки и пустоты."""
+    pg.set_viewport_size(dict(width=W, height=1400)); pg.wait_for_timeout(300)
+    h = pg.evaluate("() => { const l = document.querySelector('#list');"
+                    " let m = 0; for (const c of l.children) m = Math.max(m, c.getBoundingClientRect().bottom);"
+                    " return Math.ceil(m + 22) }")
+    pg.set_viewport_size(dict(width=W, height=max(h, min_h)))
+    pg.wait_for_timeout(400)
+
+HIDE_BG = ".addbar,.tabsrow,.list{visibility:hidden !important}"
+
 with sync_playwright() as p:
     b = p.chromium.launch()
-    def new(w=900, h=720):
-        ctx = b.new_context(viewport=dict(width=w, height=h), device_scale_factor=2)
+    def new(h=900):
+        ctx = b.new_context(viewport=dict(width=W, height=h), device_scale_factor=2)
         pg = ctx.new_page()
         pg.add_init_script("window.webkit={messageHandlers:{ytl:{postMessage:function(){}}}};")
         pg.goto("file://" + UI)
         return pg
     def shot(pg, name): pg.screenshot(path=f"{OUT}/{name}.png")
 
-    # 1 очередь
-    pg = new(h=1180); apply(pg, state(items)); shot(pg, "01-queue")
-    # 3 пустая очередь
-    pg = new(); apply(pg, state([], totals=dict(active=0, speed=0))); shot(pg, "03-empty-dropzone")
-    # 4 история
-    pg = new(); apply(pg, state(items)); pg.click("#tabHistory"); pg.wait_for_timeout(400); shot(pg, "04-history")
-    # 5 отложено
-    pg = new(); apply(pg, state(items + deferred)); pg.click("#tabDeferred"); pg.wait_for_timeout(400); shot(pg, "05-deferred")
-    # 6 настройки
-    pg = new(w=900,h=1180); apply(pg, state(items)); pg.click("#gear"); pg.wait_for_timeout(600); shot(pg, "06-settings")
-    # 7 меню качества
-    pg = new(); apply(pg, state(items)); pg.click("#ddQuality .ddbtn"); pg.wait_for_timeout(300); shot(pg, "07-quality-menu")
-    # 8 фрагмент
-    pg = new(); apply(pg, state(items)); pg.click("#cutBtn"); pg.fill("#cutFrom","00:05:00"); pg.fill("#cutTo","00:12:00"); pg.wait_for_timeout(300); shot(pg, "08-clip-range")
-    # 9 плотный список
-    pg = new(h=760); apply(pg, state(items + [], settings=settings(density="list", accent="#AF52DE"))); shot(pg, "09-dense-list-accent")
-    # 10 мастер первого запуска
-    pg = new(); apply(pg, state([], settings=settings(onboarded=False), totals=dict(active=0, speed=0))); pg.wait_for_timeout(300); shot(pg, "10-onboarding-1")
-    pg.click('[data-onb="next"]'); pg.wait_for_timeout(300); pg.click('[data-onb="check"]'); pg.wait_for_timeout(1500); shot(pg, "11-onboarding-2")
-    # 12 предупреждение об отсутствии ffmpeg
-    pg = new(h=1180); e = dict(ENV, ffmpeg=False, ffmpegPath=""); apply(pg, state(items, env=e)); shot(pg, "12-missing-component")
+    # 1. очередь — главный экран
+    pg = new(); apply(pg, state(items)); fit_list(pg); shot(pg, "01-queue")
+
+    # 2. настройки — панель целиком; высота подобрана так, чтобы прокрутка
+    #    обрывалась на границе блока, а не посреди строки
+    pg = new(900); apply(pg, state(items)); pg.add_style_tag(content=HIDE_BG)
+    pg.click("#gear"); pg.wait_for_timeout(700)
+    need = pg.evaluate("""() => {
+      const body = document.querySelector('.sheetb');
+      const g = [...document.querySelectorAll('.sheetb .group')].find(x => x.textContent.includes('спонсорские'));
+      return Math.ceil(g.getBoundingClientRect().bottom - body.getBoundingClientRect().top + body.scrollTop + 12);
+    }""")
+    pg.set_viewport_size(dict(width=W, height=need + 104)); pg.wait_for_timeout(600)
+    pg.locator(".sheet").screenshot(path=f"{OUT}/02-settings.png")
+
+    # 3. история
+    pg = new(); apply(pg, state(items)); pg.click("#tabHistory"); pg.wait_for_timeout(400)
+    fit_list(pg); shot(pg, "03-history")
+
+    # 4. отложенные
+    pg = new(); apply(pg, state(items + deferred)); pg.click("#tabDeferred"); pg.wait_for_timeout(400)
+    fit_list(pg); shot(pg, "04-deferred")
+
+    # 5. мастер первого запуска — карточка целиком
+    pg = new(760); apply(pg, state([], settings=settings(onboarded=False), totals=dict(active=0, speed=0)))
+    pg.add_style_tag(content=HIDE_BG)
+    pg.wait_for_timeout(300); pg.click('[data-onb="next"]'); pg.wait_for_timeout(300)
+    pg.click('[data-onb="check"]'); pg.wait_for_timeout(1500)
+    pg.locator(".onbCard").screenshot(path=f"{OUT}/05-onboarding.png")
     b.close()
 print("ok")
