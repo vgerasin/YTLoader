@@ -5,7 +5,7 @@
 <p align="center">Менеджер загрузок для macOS поверх <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a>:<br>
 вставил ссылки — получил видео или MP3. Без браузера и терминала.</p>
 
-<p align="center"><img src="docs/screenshots/01-queue-dark.png" width="640" alt="Очередь загрузок"></p>
+<p align="center"><img src="docs/screenshots/01-queue.png" width="640" alt="Очередь загрузок"></p>
 
 ## Что умеет
 
@@ -47,7 +47,7 @@
 
 <table>
 <tr>
-<td><img src="docs/screenshots/02-queue-light.png" alt="Светлая тема"><br><sub>Светлая тема</sub></td>
+<td><img src="docs/screenshots/07-quality-menu.png" alt="Выбор качества"><br><sub>Выбор качества — до 4K</sub></td>
 <td><img src="docs/screenshots/06-settings.png" alt="Настройки"><br><sub>Настройки</sub></td>
 </tr>
 <tr>

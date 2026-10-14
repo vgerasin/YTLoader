@@ -17,7 +17,7 @@ def thumb(c1, c2):
 T = [thumb("#5B8DEF","#8E5BEF"), thumb("#F2994A","#EB5757"), thumb("#27AE60","#2D9CDB"), thumb("#BB6BD9","#2F80ED"), thumb("#56CCF2","#2F80ED")]
 
 def settings(**kw):
-    s = dict(onboarded=True, theme="dark", density="normal", accent="#007AFF", language="ru",
+    s = dict(onboarded=True, theme="light", density="normal", accent="#007AFF", language="ru",
              folder="/Users/demo/Movies/YTLoader", defaultQuality="1080p", maxParallel="3",
              speedLimit="", organize="channel", codec="any", cookieBrowser="none",
              filenameTemplate="%(title)s [%(id)s].%(ext)s", subtitles="ru,en", subsEmbed=True,
@@ -79,7 +79,7 @@ def apply(page, s):
 
 with sync_playwright() as p:
     b = p.chromium.launch()
-    def new(theme="dark", w=900, h=720):
+    def new(w=900, h=720):
         ctx = b.new_context(viewport=dict(width=w, height=h), device_scale_factor=2)
         pg = ctx.new_page()
         pg.add_init_script("window.webkit={messageHandlers:{ytl:{postMessage:function(){}}}};")
@@ -87,10 +87,8 @@ with sync_playwright() as p:
         return pg
     def shot(pg, name): pg.screenshot(path=f"{OUT}/{name}.png")
 
-    # 1 очередь, тёмная
-    pg = new(h=1180); apply(pg, state(items)); shot(pg, "01-queue-dark")
-    # 2 очередь, светлая
-    pg = new(h=1180); apply(pg, state(items, settings=settings(theme="light"))); shot(pg, "02-queue-light")
+    # 1 очередь
+    pg = new(h=1180); apply(pg, state(items)); shot(pg, "01-queue")
     # 3 пустая очередь
     pg = new(); apply(pg, state([], totals=dict(active=0, speed=0))); shot(pg, "03-empty-dropzone")
     # 4 история
