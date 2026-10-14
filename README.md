@@ -69,11 +69,24 @@
 
 ## Установка
 
-1. Скачайте `YTLoader-<версия>.dmg` из раздела [Releases](../../releases) (или соберите сами: `make dmg`).
-2. Перетащите YTLoader в «Программы».
+1. Скачайте **[YTLoader-4.6.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-4.6.dmg)** (37 МБ).
+   Контрольная сумма SHA-256 — в файле [downloads/YTLoader-4.6.dmg.sha256](downloads/YTLoader-4.6.dmg.sha256).
+2. Откройте DMG и перетащите YTLoader в «Программы».
 3. Первый запуск: приложение подписано без аккаунта разработчика Apple, поэтому macOS может его не открыть.
    Нажмите на нём правой кнопкой → «Открыть» → «Открыть» (или в «Системных настройках → Конфиденциальность и безопасность» нажмите «Всё равно открыть»).
 4. Мастер первого запуска проверит компоненты. yt-dlp уже внутри; ffmpeg, ffprobe и JS-движок (deno) он скачает по кнопке «Установить».
+
+Новые версии собираются автоматически и появляются в разделе [Releases](../../releases) — см. «Выпуск новой версии» ниже.
+
+### Собрать самому
+
+На Mac с установленными Command Line Tools:
+
+```bash
+git clone https://github.com/vgerasin/YTLoader.git
+cd YTLoader
+make dmg          # → dist/YTLoader-<версия>.dmg
+```
 
 **Требования:** macOS 12 или новее, Mac на Apple Silicon (текущая сборка оболочки — только arm64; yt-dlp внутри универсальный).
 
@@ -85,6 +98,8 @@ host/           Swift-оболочка: пока только готовый б�
 scripts/        build-dmg.sh — сборка .app и DMG
 tools/          screenshots.py — отрисовка скриншотов интерфейса без Mac
 docs/           архитектура и скриншоты
+downloads/      готовый DMG текущей версии и его контрольная сумма
+.github/        автосборка DMG и публикация релиза (Actions)
 VERSION         номер версии, подставляется в Info.plist и имя DMG
 ```
 
@@ -93,6 +108,12 @@ make dmg          # на Mac: dist/YTLoader-<версия>.dmg
 make app          # только build/YTLoader.app
 make screenshots  # обновить docs/screenshots (python3 + playwright)
 ```
+
+### Выпуск новой версии
+
+1. Поднимите номер в `VERSION` и допишите `CHANGELOG.md`, закоммитьте.
+2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v4.7 && git push origin v4.7`).
+   GitHub соберёт DMG на macOS и выложит его в Releases.
 
 Как устроен мост между интерфейсом и оболочкой и как добавлять функции — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
