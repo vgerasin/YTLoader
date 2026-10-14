@@ -1,0 +1,2319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YTLoader</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Helvetica,Arial,sans-serif;
+       -webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text);overflow:hidden}
+  button{font-family:inherit}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:var(--neutral);border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  :root{
+    --accent:#007AFF; --accentHi:#3D9BFF; --accentLo:#005FC7; --onAccent:#FFFFFF;
+    --bg:linear-gradient(180deg,#EFEFF4 0%,#E4E5EC 60%,#DCDEE6 100%);
+    --panel:rgba(255,255,255,0.72); --panelBorder:rgba(255,255,255,0.75);
+    --hairline:rgba(60,60,67,0.12);
+    --surface:rgba(255,255,255,0.78); --surfaceBorder:rgba(255,255,255,0.9);
+    --field:rgba(255,255,255,0.9); --fieldBorder:rgba(60,60,67,0.14);
+    --chip:rgba(120,120,128,0.10); --chipBorder:rgba(255,255,255,0.7);
+    --text:#000000; --muted:#3C3C43; --faint:rgba(60,60,67,0.5);
+    --track:rgba(120,120,128,0.18);
+    --thumbA:rgba(120,120,128,0.20); --thumbB:rgba(120,120,128,0.10);
+    --audio:#AF52DE; --neutral:rgba(120,120,128,0.35);
+    --gloss:linear-gradient(180deg,rgba(255,255,255,0.55),rgba(255,255,255,0) 55%);
+    --warnBg:rgba(255,159,10,0.16); --warnText:#9A5B00;
+    --errBg:rgba(255,59,48,0.13); --errText:#B3261E;
+    --okDot:#34C759;
+  }
+  body.dark{
+    --bg:linear-gradient(180deg,#1B1B22 0%,#141419 60%,#0E0E12 100%);
+    --panel:rgba(38,38,45,0.72); --panelBorder:rgba(255,255,255,0.12);
+    --hairline:rgba(255,255,255,0.09);
+    --surface:rgba(255,255,255,0.07); --surfaceBorder:rgba(255,255,255,0.10);
+    --field:rgba(0,0,0,0.28); --fieldBorder:rgba(255,255,255,0.12);
+    --chip:rgba(255,255,255,0.09); --chipBorder:rgba(255,255,255,0.10);
+    --text:#FFFFFF; --muted:rgba(235,235,245,0.7); --faint:rgba(235,235,245,0.45);
+    --track:rgba(255,255,255,0.12);
+    --thumbA:rgba(255,255,255,0.14); --thumbB:rgba(255,255,255,0.05);
+    --neutral:rgba(235,235,245,0.35);
+    --gloss:linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0) 55%);
+    --warnBg:rgba(255,159,10,0.18); --warnText:#FFB340;
+    --errBg:rgba(255,69,58,0.16); --errText:#FF8A80;
+  }
+
+  @keyframes sheen{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+  @keyframes slide{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+  @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* ---------------------------------------------------------- каркас */
+  .shell{height:100%;display:flex;flex-direction:column;position:relative;
+         background:var(--panel);backdrop-filter:blur(40px) saturate(180%);
+         -webkit-backdrop-filter:blur(40px) saturate(180%)}
+
+  .titlebar{display:flex;align-items:center;gap:10px;padding:12px 14px;flex-shrink:0;
+            border-bottom:1px solid var(--hairline);background:var(--gloss);-webkit-app-region:drag}
+  .titlebar button,.titlebar .segbox{-webkit-app-region:no-drag}
+  .brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:-.1px}
+  .brandmark{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+             background:linear-gradient(180deg,var(--accent),var(--accentLo));
+             box-shadow:0 2px 6px -1px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.45)}
+  .chip{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;color:var(--muted);
+        background:var(--chip);border:1px solid var(--chipBorder);padding:4px 10px;border-radius:100px;
+        white-space:nowrap}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--okDot);
+       box-shadow:0 0 0 3px rgba(52,199,89,.18)}
+  .spacer{flex:1}
+
+  .segbox{display:inline-flex;gap:2px;padding:3px;border-radius:12px;
+          background:var(--chip);border:1px solid var(--chipBorder)}
+  .segbox.round{border-radius:100px;gap:3px}
+  .segbtn{font-size:12.5px;font-weight:600;padding:6px 14px;border-radius:9px;border:none;cursor:pointer;
+          background:transparent;color:var(--faint);transition:background .15s,color .15s}
+  .segbtn.sm{padding:5px 12px}
+  .segbtn.on{background:var(--surface);color:var(--text);
+             box-shadow:0 1px 3px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.5)}
+  .iconbtn{width:26px;height:26px;border-radius:100px;border:none;cursor:pointer;padding:0;
+           display:flex;align-items:center;justify-content:center;background:transparent;color:var(--faint);
+           transition:background .15s,color .15s}
+  .iconbtn.on{background:var(--surface);color:var(--text);
+              box-shadow:0 1px 3px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.5)}
+
+  /* ---------------------------------------------------------- полоса-предупреждение */
+  .setupbar{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:12.5px;flex-shrink:0;
+            background:var(--errBg);color:var(--errText);border-bottom:1px solid var(--hairline)}
+  .setupbar.warn{background:var(--warnBg);color:var(--warnText)}
+  .setupbar code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                 background:rgba(127,127,127,.16);padding:1px 6px;border-radius:6px}
+  .setupbar .x{width:20px;height:20px;border:none;background:transparent;color:inherit;cursor:pointer;
+               display:flex;align-items:center;justify-content:center;padding:0;opacity:.7}
+
+  /* ---------------------------------------------------------- добавление */
+  .addbar{padding:14px 16px 12px;border-bottom:1px solid var(--hairline);flex-shrink:0;
+          display:flex;flex-direction:column;gap:10px}
+  .inputwrap{border-radius:16px;border:1px solid var(--fieldBorder);background:var(--field);
+             box-shadow:inset 0 1px 3px rgba(60,60,67,.08);padding:11px 14px;transition:border-color .15s}
+  .inputwrap:focus-within{border-color:var(--accent)}
+  textarea{width:100%;resize:none;border:none;outline:none;background:transparent;color:var(--text);
+           font-family:inherit;font-size:13.5px;line-height:1.5}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  .dd{position:relative}
+  .ddbtn{display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:12px;font-size:12.5px;
+         font-weight:600;color:var(--text);cursor:pointer;background:var(--surface);
+         border:1px solid var(--fieldBorder);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+  .ddbtn.open{border-color:var(--accent)}
+  .menu{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:180px;padding:6px;
+        border-radius:14px;border:1px solid var(--panelBorder);background:var(--panel);
+        backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+        box-shadow:0 18px 44px -16px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:2px}
+  .menu.wide{min-width:236px}
+  .menu.up{top:auto;bottom:calc(100% + 6px)}
+  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+            font-size:12.5px;font-weight:600;padding:7px 10px;border-radius:10px;border:none;cursor:pointer;
+            text-align:left;color:var(--text);background:transparent}
+  .menuitem:hover{background:var(--chip)}
+  .menuitem.on{background:var(--surface)}
+  .menuitem .hint{font-size:10.5px;font-weight:500;color:var(--faint)}
+  .menuitem .lbl{display:flex;flex-direction:column;gap:1px;text-align:left}
+  .check{display:flex;align-items:center;color:var(--accent);opacity:0}
+  .menuitem.on .check{opacity:1}
+  input[type=time],input[type=text]{font-family:inherit;font-size:12.5px;color:var(--text);
+        padding:6px 10px;border-radius:10px;background:var(--field);border:1px solid var(--fieldBorder);outline:none}
+  input[type=time]:focus,input[type=text]:focus{border-color:var(--accent)}
+
+  .btn{font-size:12px;font-weight:600;padding:6px 12px;border-radius:10px;cursor:pointer;
+       border:1px solid var(--fieldBorder);background:transparent;color:var(--muted);transition:.15s}
+  .btn:hover{color:var(--text);background:var(--chip)}
+  .btn.solid{background:var(--surface);color:var(--text);border-color:var(--fieldBorder)}
+  .btn.primary{border:none;color:var(--onAccent);font-weight:700;padding:7px 13px;
+               background:linear-gradient(180deg,var(--accentHi),var(--accent));
+               box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+  .btn.primary:hover{filter:brightness(1.06);background:linear-gradient(180deg,var(--accentHi),var(--accent))}
+  .btn.add{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:9px 18px;
+           border-radius:12px;border:none;color:var(--onAccent);
+           background:linear-gradient(180deg,var(--accentHi),var(--accent));
+           box-shadow:0 6px 16px -6px rgba(0,90,200,.5),inset 0 1px 0 rgba(255,255,255,.5)}
+  .btn.add:hover{filter:brightness(1.06)}
+
+  /* ---------------------------------------------------------- список */
+  .tabsrow{padding:12px 16px 0;flex-shrink:0}
+  .list{flex:1;overflow-y:auto;padding:12px 16px 18px;display:flex;flex-direction:column;gap:10px}
+
+  .card{display:flex;gap:13px;padding:12px;border-radius:18px;background:var(--surface);
+        border:1px solid var(--surfaceBorder);box-shadow:0 2px 10px -6px rgba(20,22,40,.28);
+        position:relative;overflow:hidden}
+  .card.fresh{animation:pop .2s ease}
+  /* цветная полоска слева — статус читается, не читая текст */
+  .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+                background:transparent;transition:background .2s}
+  .card.st-active::before{background:var(--accent)}
+  .card.st-audio::before{background:var(--audio)}
+  .card.st-paused::before{background:var(--neutral)}
+  .card.st-error::before{background:#FF3B30}
+  .card.st-wait::before{background:#FF9F0A}
+  .card.st-done::before{background:#34C759}
+  body.compact .card{gap:10px;padding:9px 11px;border-radius:14px}
+
+  /* плотный режим: строка вместо карточки */
+  body.list .list{gap:0;padding:8px 12px 16px}
+  body.list .card{gap:10px;padding:7px 10px 7px 12px;border-radius:0;border:none;box-shadow:none;
+                  background:transparent;border-bottom:1px solid var(--hairline);align-items:center}
+  body.list .card:hover{background:var(--chip)}
+  body.list .card::before{width:3px;top:4px;bottom:4px;border-radius:2px}
+  body.list .thumb{width:44px;height:28px;border-radius:6px}
+  body.list .thumb .dur,body.list .thumb .ph{display:none}
+  body.list .body{flex-direction:row;align-items:center;gap:10px}
+  body.list .titlerow{flex:1;min-width:0;display:block}
+  body.list .pills{display:none}
+  body.list .sub{display:none}
+  body.list .ttl{font-size:12.5px}
+  body.list .track{width:150px;flex-shrink:0;height:5px}
+  body.list .meta{width:190px;flex-shrink:0;justify-content:flex-end;font-size:10.5px}
+  body.list .meta .left{display:none}
+  body.list .badge.err{font-size:10.5px;padding:4px 8px;max-width:320px;white-space:nowrap;
+                       overflow:hidden;text-overflow:ellipsis}
+  body.list .actions{flex-direction:row;gap:4px}
+  body.list .btn{padding:6px 9px;font-size:11px}
+
+  /* группа плейлиста */
+  .ghead{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;
+         background:var(--chip);border:1px solid var(--chipBorder);cursor:pointer}
+  body.list .ghead{border-radius:0;border:none;border-bottom:1px solid var(--hairline);
+                   background:transparent;padding:8px 10px}
+  .ghead .chev{transition:transform .2s;flex-shrink:0;color:var(--faint)}
+  .ghead.closed .chev{transform:rotate(-90deg)}
+  .ghead .gt{flex:1;min-width:0}
+  .ghead .gtitle{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ghead .gsub{font-size:11px;color:var(--muted);margin-top:2px}
+  .ghead .gtrack{width:120px;height:5px;border-radius:100px;background:var(--track);overflow:hidden;flex-shrink:0}
+  .ghead .gfill{height:100%;background:var(--accent);border-radius:100px;transition:width .6s linear}
+  .ghead .gacts{display:flex;gap:5px;flex-shrink:0}
+
+  /* панель массовых действий */
+  .bulk{display:flex;align-items:center;gap:7px;padding:2px 2px 6px;flex-wrap:wrap}
+  .bulk .n{font-size:11.5px;color:var(--faint);margin-right:auto}
+  /* высота превью не задаётся напрямую — тянется по высоте всей строки
+     (align-items:stretch у .card это делает сама), как в остальных карточках */
+  .thumb{width:78px;min-height:52px;border-radius:12px;flex-shrink:0;overflow:hidden;position:relative;
+         display:flex;align-items:center;justify-content:center;
+         background:repeating-linear-gradient(135deg,var(--thumbA),var(--thumbA) 6px,var(--thumbB) 6px,var(--thumbB) 12px)}
+  body.compact .thumb{width:60px;min-height:40px}
+  .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .ph{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8.5px;letter-spacing:.6px;
+             color:var(--faint);text-transform:uppercase}
+  .thumb .dur{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.72);color:#fff;font-size:9.5px;
+              font-weight:600;padding:1px 5px;border-radius:5px}
+  /* заголовок и подпись раньше липли к верху карточки, оставляя пустоту
+     снизу (её задаёт колонка кнопок, если она выше) — теперь всё это
+     держится по центру строки по вертикали */
+  .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+  .titlerow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .ttl{font-size:13.5px;font-weight:600;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pills{display:flex;gap:5px;flex-shrink:0}
+  .pill{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:2.5px 8px;
+        border-radius:100px;white-space:nowrap}
+  .pill.q{background:var(--chip);border:1px solid var(--chipBorder);color:var(--muted)}
+  .pill.f{color:#fff;background:var(--accent);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+  .pill.f.mp3{background:var(--audio)}
+  .sub{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .badge{font-size:11.5px;line-height:1.45}
+  .badge.err{background:var(--errBg);color:var(--errText);padding:8px 11px;border-radius:11px;
+             white-space:pre-wrap}
+  .badge.wait{display:inline-flex;align-items:center;gap:6px;width:fit-content;background:var(--warnBg);
+              color:var(--warnText);font-weight:600;padding:4px 10px;border-radius:100px}
+
+  .track{height:8px;border-radius:100px;background:var(--track);overflow:hidden;position:relative;display:flex}
+  .seg{height:100%;position:relative;overflow:hidden;flex-shrink:0;transition:width .5s ease}
+  .seg + .seg{box-shadow:inset 1px 0 0 var(--panel)}
+  .seg > i{display:block;height:100%;width:0;background:var(--accent);transition:width .6s linear}
+  .seg.audio > i{background:var(--audio)}
+  .seg.pending{opacity:.5}
+  .track.paused .seg > i{background:var(--neutral)}
+  .seg.active > i::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+      animation:sheen 1.8s ease-in-out infinite}
+  .bar{height:100%;background:var(--accent);border-radius:100px;transition:width .6s linear}
+  .bar.paused{background:var(--neutral);transition:none}
+  .track.indet .bar{width:35%;transition:none;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent);
+      animation:slide 1.3s linear infinite}
+  .track.merging::after{content:'';position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+      animation:slide 1.4s linear infinite}
+
+  .meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)}
+  .meta .left{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta .right{display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0}
+  .phase{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:2px 7px;
+         border-radius:100px;color:#fff;background:var(--accent)}
+  .phase.audio{background:var(--audio)}
+  .phase.merge{background:var(--neutral)}
+  .actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:stretch;justify-content:center}
+  .empty{padding:52px 0;text-align:center;font-size:13.5px;color:var(--faint);line-height:1.8}
+  /* пустая очередь — сразу зона перетаскивания, а не просто текст */
+  .dropzone{margin:6px 2px;padding:40px 20px;border-radius:18px;text-align:center;
+            border:2px dashed var(--fieldBorder);background:var(--chip);color:var(--muted);
+            transition:border-color .15s,background .15s}
+  .dropzone.hot{border-color:var(--accent);background:rgba(0,122,255,.10)}
+  .dropzone .big{font-size:14px;font-weight:600;color:var(--text);margin:10px 0 4px}
+  .dropzone .sm{font-size:12px;color:var(--faint);line-height:1.7}
+  .dropzone svg{color:var(--faint)}
+
+  /* ---------------------------------------------------------- настройки */
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.12);z-index:40}
+  .sheet{position:absolute;top:52px;right:12px;width:420px;z-index:50;border-radius:20px;
+         border:1px solid var(--panelBorder);background:var(--panel);
+         backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+         box-shadow:0 26px 60px -20px rgba(0,0,0,.5);overflow:hidden}
+  .sheeth{padding:12px 14px 10px;background:var(--gloss);border-bottom:1px solid var(--hairline);
+          display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700}
+  .sheeth .ver{font-size:11px;font-weight:400;color:var(--faint)}
+  .sheetb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;
+          max-height:calc(100vh - 104px);overflow-y:auto;overscroll-behavior:contain}
+  /* заголовок раздела — как в системных настройках */
+  .sect{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+        color:var(--faint);padding:8px 4px 0}
+  .sect:first-child{padding-top:2px}
+  .sheetf{display:flex;align-items:center;gap:8px;padding:10px 12px;
+          border-top:1px solid var(--hairline);background:var(--gloss)}
+  .group{border-radius:14px;background:var(--surface);border:1px solid var(--surfaceBorder);overflow:visible}
+  .group.pad{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+  .glabel{font-size:11.5px;color:var(--muted)}
+  .grow{display:flex;align-items:center;gap:12px;padding:10px 12px}
+  .grow .t{font-size:12.5px;font-weight:600}
+  .grow .s{font-size:11px;color:var(--faint);margin-top:1px}
+  .divider{height:1px;background:var(--hairline);margin-left:12px}
+  .pathbox{flex:1;min-width:0;font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+           padding:6px 10px;border-radius:10px;background:var(--field);border:1px solid var(--fieldBorder);
+           white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fieldbtn{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;font-size:12.5px;
+            font-weight:600;color:var(--text);padding:6px 10px;border-radius:10px;background:var(--field);
+            cursor:pointer;border:1px solid var(--fieldBorder)}
+  .fieldbtn.open{border-color:var(--accent)}
+  .fieldbtn{min-width:0}
+  .fieldbtn .val{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* меню внутри прокручиваемой панели: прижимаем к ширине карточки */
+  .sheetb .menu{left:8px;right:8px;min-width:0;top:calc(100% - 2px)}
+  .switch{width:38px;height:23px;flex-shrink:0;border-radius:100px;border:none;padding:2px;cursor:pointer;
+          display:flex;align-items:center;background:var(--neutral);transition:background .2s}
+  .switch.on{background:linear-gradient(180deg,var(--accentHi),var(--accent))}
+  .switch .knob{display:block;width:19px;height:19px;border-radius:50%;background:#fff;
+                box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+  .switch.on .knob{transform:translateX(15px)}
+  .accdot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+
+  /* подсказка со ссылкой из буфера обмена */
+  .dupe{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:14px;
+        background:var(--warnBg);color:var(--warnText);font-size:12.5px;margin-bottom:2px}
+  .dupe .u{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .clip{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:14px;
+        background:var(--surface);border:1px solid var(--surfaceBorder);font-size:12.5px;
+        box-shadow:0 2px 10px -6px rgba(20,22,40,.28);animation:pop .2s ease}
+  .clip .u{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+  .clip b{color:var(--text);font-weight:600;white-space:nowrap}
+
+  .search{display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:12px;
+          background:var(--field);border:1px solid var(--fieldBorder);margin-bottom:2px}
+  .search input{flex:1;border:none;outline:none;background:transparent;color:var(--text);
+                font-family:inherit;font-size:12.5px;padding:0}
+
+  /* журнал: строки не переносим, длинные пути листаются вбок */
+  .logbox{padding:10px 12px;border-radius:14px;background:var(--field);border:1px solid var(--fieldBorder);
+          font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.7;
+          color:var(--muted);white-space:pre;max-height:200px;overflow:auto;tab-size:2}
+  .envlist{display:flex;flex-direction:column;gap:5px;font-size:11.5px}
+  .envlist div{display:flex;gap:8px;align-items:baseline}
+  .envlist .k{color:var(--faint);flex-shrink:0;width:82px}
+  .envlist .v{color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
+              word-break:break-word;min-width:0}
+
+  .toast{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:80;
+         background:var(--panel);border:1px solid var(--panelBorder);color:var(--text);font-size:12.5px;
+         padding:9px 16px;border-radius:100px;box-shadow:0 14px 34px -12px rgba(0,0,0,.5);
+         backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%)}
+  .drop{position:absolute;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;
+        font-size:16px;font-weight:700;color:var(--text);
+        background:rgba(0,122,255,.14);border:3px dashed var(--accent);border-radius:18px}
+
+  /* ---------------------------------------------------------- мастер первого запуска */
+  .onbScrim{position:absolute;inset:0;z-index:100;background:rgba(0,0,0,.34);
+            display:flex;align-items:center;justify-content:center;padding:20px}
+  .onbCard{width:360px;max-width:100%;border-radius:22px;background:var(--panel);
+           border:1px solid var(--panelBorder);box-shadow:0 30px 70px -18px rgba(0,0,0,.55);
+           backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+           padding:26px 24px 20px;display:flex;flex-direction:column;gap:14px;animation:pop .18s ease-out}
+  .onbIcon{width:52px;height:52px;border-radius:15px;margin:0 auto;flex-shrink:0;
+           background:linear-gradient(180deg,var(--accentHi),var(--accentLo));
+           box-shadow:0 8px 20px -8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.4);
+           display:flex;align-items:center;justify-content:center}
+  .onbTitle{font-size:17px;font-weight:700;text-align:center;letter-spacing:-.1px}
+  .onbText{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.55}
+  .onbDots{display:flex;gap:6px;justify-content:center}
+  .onbDot{width:6px;height:6px;border-radius:50%;background:var(--neutral);transition:.2s}
+  .onbDot.on{background:var(--accent);width:16px;border-radius:4px}
+  .onbList{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;
+           border:1px solid var(--surfaceBorder)}
+  .onbRow{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--surface);font-size:12.5px}
+  .onbRow + .onbRow{border-top:1px solid var(--hairline)}
+  .onbRow .nm{flex:1;font-weight:600;min-width:0}
+  .onbRow .st{font-size:10.5px;color:var(--faint);white-space:nowrap}
+  .onbState{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--neutral)}
+  .onbState.ok{background:var(--okDot)}
+  .onbState.bad{background:var(--errText)}
+  .onbState.busy{background:var(--accent);animation:onbPulse 1s ease-in-out infinite}
+  @keyframes onbPulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .onbFoot{display:flex;align-items:center;gap:8px;padding-top:2px}
+  .onbSkip{font-size:11.5px;color:var(--faint);cursor:pointer;background:none;border:none;padding:6px 2px}
+  .onbSkip:hover{color:var(--muted)}
+
+  /* клавиатурная навигация: рамка видна только когда фокус поставлен с Tab,
+     мышь её не показывает — иначе каждый клик подсвечивал бы кнопку */
+  .btn:focus-visible,.iconbtn:focus-visible,.segbtn:focus-visible,
+  .switch:focus-visible,.accdot:focus-visible,.ddbtn:focus-visible,
+  .fieldbtn:focus-visible,.onbSkip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="titlebar">
+    <div class="brand">
+      <div class="brandmark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff"
+        stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg></div>
+      YTLoader
+    </div>
+    <div class="chip" id="netchip"><span class="dot"></span><span></span></div>
+    <div class="chip" id="speedchip" style="display:none">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+        stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13"/><path d="M6 13l6 6 6-6"/></svg>
+      <span class="txt"></span>
+    </div>
+    <div class="spacer"></div>
+    <div class="segbox round">
+      <button class="iconbtn" id="themeLight" title="Светлая тема"><svg width="14" height="14" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path
+        d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"/></svg></button>
+      <button class="iconbtn" id="themeDark" title="Тёмная тема"><svg width="14" height="14" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path
+        d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg></button>
+    </div>
+    <button class="iconbtn" id="gear" title="Настройки (⌘,)"><svg width="14" height="14" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle
+      cx="15" cy="7" r="2.4"/><circle cx="7" cy="17" r="2.4"/></svg></button>
+  </div>
+
+  <div class="setupbar" id="setupbar" style="display:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 7.6v6M12 16.6v.2"/></svg>
+    <span class="txt"></span>
+    <div class="spacer"></div>
+    <button class="x" id="setupClose"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+
+  <div class="addbar">
+    <div class="inputwrap">
+      <textarea id="input" rows="2" placeholder="Вставьте ссылки YouTube — по одной в строке, можно плейлист"></textarea>
+    </div>
+    <div class="row">
+      <div class="dd" id="ddQuality">
+        <button class="ddbtn"><span class="val">1080p</span><svg width="10" height="10" viewBox="0 0 24 24"
+          fill="none" stroke="var(--faint)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+      <div class="segbox">
+        <button class="segbtn sm on" id="modeVideo">Видео</button>
+        <button class="segbtn sm" id="modeAudio">MP3</button>
+      </div>
+      <div class="dd" id="ddStart">
+        <button class="ddbtn"><span class="val">Начать сразу</span><svg width="10" height="10" viewBox="0 0 24 24"
+          fill="none" stroke="var(--faint)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+      <input type="time" id="deferTime" value="23:00" style="display:none">
+      <button class="btn" id="cutBtn" title="Скачать только кусок ролика">Фрагмент</button>
+      <div class="spacer"></div>
+      <button class="btn add" id="addBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Добавить</button>
+    </div>
+    <div class="row" id="cutRow" style="display:none">
+      <span class="glabel">Фрагмент ролика:</span>
+      <input type="text" id="cutFrom" placeholder="от 00:05:00" style="width:120px">
+      <input type="text" id="cutTo" placeholder="до 00:12:00" style="width:120px">
+      <span class="glabel">пусто — от начала и до конца</span>
+    </div>
+    <div id="clipHost"></div>
+  </div>
+
+  <div class="tabsrow">
+    <div class="segbox">
+      <button class="segbtn on" data-tab="queue" id="tabQueue">Очередь · 0</button>
+      <button class="segbtn" data-tab="deferred" id="tabDeferred">Отложено · 0</button>
+      <button class="segbtn" data-tab="history" id="tabHistory">История · 0</button>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<script>
+/* Переводы интерфейса. Ключ — русская строка: если перевода нет,
+   показывается она сама, поэтому ничего не ломается на полпути.
+   Подстановки в фигурных скобках: t("{a} из {b}", {a: 1, b: 2}). */
+const I18N = {
+  en: {
+    // --- шапка и добавление
+    "Светлая тема": "Light theme", "Тёмная тема": "Dark theme",
+    "Настройки (⌘,)": "Settings (⌘,)", "Настройки": "Settings",
+    "нет сети": "no network", "активн.": "active",
+    "Вставьте ссылки YouTube — по одной в строке, можно плейлист":
+      "Paste YouTube links — one per line, playlists work too",
+    "Видео": "Video", "Добавить": "Add",
+    "Фрагмент": "Clip", "Скачать только кусок ролика": "Download only part of the video",
+    "Фрагмент ролика:": "Clip range:", "от 00:05:00": "from 00:05:00", "до 00:12:00": "to 00:12:00",
+    "пусто — от начала и до конца": "empty means start to end",
+    "Начать сразу": "Start now", "Встать в очередь и качать": "Queue it and download",
+    "Только по Wi-Fi": "Wi-Fi only", "Ждать сеть без лимита": "Wait for an unmetered network",
+    "По расписанию": "On schedule", "Запуск в заданное время": "Starts at the chosen time",
+    "Отложить": "Hold", "Запустить вручную": "Start it yourself",
+    "Максимум (4K)": "Best (4K)",
+    // --- вкладки
+    "Очередь": "Queue", "Отложено": "On hold", "История": "History",
+    // --- состояния
+    "Получаю информацию о видео…": "Getting video info…",
+    "в очереди": "queued", "ожидает слота": "waiting for a slot", "на паузе": "paused",
+    "видео": "video", "аудио": "audio", "склейка": "merging", "в mp3": "to mp3",
+    "склеиваю дорожки…": "merging tracks…", "конвертирую в mp3…": "converting to mp3…",
+    "осталось": "left", "из": "of", "загружено": "downloaded", "без cookies": "without cookies",
+    "не удалось скачать": "download failed", "превью": "preview",
+    "Ждёт подключения к Wi-Fi": "Waiting for Wi-Fi",
+    "Ждёт ручного запуска": "Waiting for you to start it",
+    "Запуск по расписанию": "Scheduled for",
+    "Плейлист": "Playlist",
+    // --- кнопки
+    "Пауза": "Pause", "Продолжить": "Resume", "Отменить": "Cancel", "Убрать": "Remove",
+    "Повторить": "Retry", "Запустить сейчас": "Start now",
+    "Показать в Finder": "Show in Finder", "Скачать снова": "Download again",
+    "Очистить историю": "Clear history", "Очистить очередь": "Clear queue",
+    "Пауза для всех": "Pause all", "Продолжить все": "Resume all",
+    "Повторить упавшие": "Retry failed", "Убрать всё": "Remove all",
+    "Показать файл": "Show file", "Не надо": "No thanks", "Готово": "Done",
+    "Обзор…": "Browse…", "Обновить yt-dlp": "Update yt-dlp", "Журнал": "Log",
+    "Открыть файл в Finder": "Show log file in Finder",
+    // --- мастер первого запуска
+    "Добро пожаловать в YTLoader": "Welcome to YTLoader",
+    "Скачивает видео и плейлисты с YouTube через yt-dlp — без браузера и терминала. Проверим, что всё на месте, и можно начинать.":
+      "Downloads videos and playlists from YouTube using yt-dlp — no browser, no terminal. Let's check everything's in place and get started.",
+    "Проверка компонентов": "Checking components",
+    "Приложению нужны эти программы — обычно они уже внутри.": "The app needs these — they're usually already bundled in.",
+    "Проверить": "Check", "Устанавливаю…": "Installing…", "Проверяем…": "Checking…",
+    "Не найден": "Not found", "Установить": "Install",
+    "Папка для загрузок": "Downloads folder", "Изменить": "Change",
+    "Всё готово": "All set",
+    "Вставляйте ссылки — можно сразу несколько, плейлисты разворачиваются сами.":
+      "Paste in links — several at once is fine, playlists unfold on their own.",
+    "Начать": "Start", "Далее": "Next", "Поехали!": "Let's go!", "Пропустить": "Skip",
+    // --- группы и массовые действия
+    "{done} из {total} готово": "{done} of {total} done",
+    "{n} качается": "{n} downloading", "{n} с ошибкой": "{n} failed",
+    "В очереди {n}": "{n} in queue", "Повторить упавшие · {n}": "Retry failed · {n}",
+    "и ещё {n}": "and {n} more",
+    // --- пустые экраны
+    "Перетащите сюда ссылку на видео": "Drop a video link here",
+    "или вставьте её в поле выше и нажмите «Добавить»":
+      "or paste it in the field above and press Add",
+    "работает и плейлист, и канал целиком": "playlists and whole channels work too",
+    "Отпустите — добавлю в очередь": "Drop it — I'll queue it",
+    "Нет отложенных загрузок": "Nothing on hold",
+    "выберите «Только по Wi-Fi» при добавлении": "pick Wi-Fi only when adding",
+    "Пока ничего не скачано": "Nothing downloaded yet",
+    "Ничего не нашлось по запросу «{q}»": "Nothing found for “{q}”",
+    "Поиск по названию и каналу": "Search by title and channel",
+    // --- сообщения
+    "Не нашёл ссылок — вставьте полный адрес со https://":
+      "No links found — paste a full address starting with https://",
+    "Запустил обновление yt-dlp…": "Updating yt-dlp…",
+    "Ссылка в буфере:": "Link in clipboard:",
+    "Уже скачано": "Already downloaded",
+    // --- предупреждения
+    "yt-dlp не найден.": "yt-dlp not found.",
+    "Установите": "Install", "и перезапустите.": "and restart.",
+    "Нет JavaScript-движка.": "No JavaScript runtime.",
+    "Без него YouTube отдаёт ссылки, которые падают с 403:":
+      "Without it YouTube hands out links that fail with 403:",
+    "ffmpeg не найден.": "ffmpeg not found.",
+    "Без него не будет mp3 и склейки 1080p+:": "No mp3 and no 1080p+ merging without it:",
+    "ffprobe не найден.": "ffprobe not found.",
+    "Без него упадут главы, фрагменты и SponsorBlock. Он ставится вместе с ffmpeg:":
+      "Chapters, clips and SponsorBlock will fail. It ships with ffmpeg:",
+    // --- настройки
+    "Загрузка": "Downloading", "Что качать вместе с видео": "Download alongside the video",
+    "Поведение": "Behaviour", "Оформление": "Appearance", "Диагностика": "Diagnostics",
+    "Папка сохранения": "Download folder", "Качество": "Quality", "Одновременно": "At once",
+    "Лимит скорости": "Speed limit", "Раскладка по папкам": "Folder layout",
+    "Кодек видео": "Video codec", "Плотность списка": "List density",
+    "Cookies из браузера — нужны для приватных и возрастных видео":
+      "Browser cookies — needed for private and age-restricted videos",
+    "Шаблон имени файла": "File name template", "Субтитры": "Subtitles",
+    "Не использовать": "Don't use", "Не скачивать": "Don't download",
+    "Русские и английские": "Russian and English", "Все доступные": "All available",
+    "Без ограничения": "No limit", "Всё в одну папку": "Everything in one folder",
+    "Подпапки по каналам": "Subfolders per channel", "Подпапки по плейлистам": "Subfolders per playlist",
+    "Любой — что отдаст YouTube": "Any — whatever YouTube serves",
+    "Обычно AV1: меньше весит": "Usually AV1: smaller files",
+    "Открывается в Quick Look и Final Cut": "Opens in Quick Look and Final Cut",
+    "Предпочитать AV1": "Prefer AV1", "Меньше размер, хуже совместимость": "Smaller, less compatible",
+    "Карточки": "Cards", "Компактные карточки": "Compact cards", "Плотный список": "Dense list",
+    "Вшивать субтитры в файл": "Embed subtitles in the file",
+    "Иначе рядом ляжет отдельный .srt": "Otherwise a separate .srt is saved next to it",
+    "Главы": "Chapters", "Разделы ролика видны в плеере": "Video sections show up in players",
+    "Вырезать спонсорские вставки": "Cut sponsor segments", "По базе SponsorBlock": "Using SponsorBlock",
+    "На мобильной сети уходит в «Отложено»": "Goes on hold on a metered network",
+    "Продолжать после перезапуска": "Resume after restart",
+    "Иначе очередь ждёт нажатия": "Otherwise the queue waits for you",
+    "Предлагать ссылку из буфера": "Offer the link from the clipboard",
+    "При возврате в окно": "When you come back to the window",
+    "Обновлять yt-dlp сам": "Update yt-dlp automatically",
+    "Раз в неделю и сразу после отказа YouTube": "Weekly, and right after YouTube refuses",
+    "Уведомлять о завершении": "Notify when finished",
+    "Системное уведомление и звук": "System notification and sound",
+    "Прогресс на значке в Dock": "Progress on the Dock icon",
+    "Процент и счётчик, пока окно свёрнуто": "Percent and counter while the window is hidden",
+    "Значок в строке меню": "Menu bar icon",
+    "Очередь и прогресс без открытия окна": "Queue and progress without opening the window",
+    "Акцентный цвет — им же красится значок в Dock":
+      "Accent colour — the Dock icon uses it too",
+    "Что нашлось на этой машине": "What was found on this machine",
+    "JS-движок": "JS runtime", "окно": "window", "не найден": "not found",
+    "не найден — YouTube будет отдавать 403": "not found — YouTube will answer 403",
+    "не найден — сломаются главы, фрагменты и SponsorBlock":
+      "not found — chapters, clips and SponsorBlock will break",
+    "загружаю журнал…": "loading the log…",
+    "Язык": "Language", "Как в системе": "Same as system",
+    // --- единицы
+    "Б": "B", "КБ": "KB", "МБ": "MB", "ГБ": "GB", "МБ/с": "MB/s",
+  },
+
+  de: {
+    "Светлая тема": "Helles Design", "Тёмная тема": "Dunkles Design",
+    "Настройки (⌘,)": "Einstellungen (⌘,)", "Настройки": "Einstellungen",
+    "нет сети": "kein Netz", "активн.": "aktiv",
+    "Вставьте ссылки YouTube — по одной в строке, можно плейлист":
+      "YouTube-Links einfügen — einer pro Zeile, Playlists gehen auch",
+    "Видео": "Video", "Добавить": "Hinzufügen",
+    "Фрагмент": "Ausschnitt", "Скачать только кусок ролика": "Nur einen Teil des Videos laden",
+    "Фрагмент ролика:": "Ausschnitt:", "от 00:05:00": "von 00:05:00", "до 00:12:00": "bis 00:12:00",
+    "пусто — от начала и до конца": "leer heißt von Anfang bis Ende",
+    "Начать сразу": "Sofort starten", "Встать в очередь и качать": "In die Warteschlange und laden",
+    "Только по Wi-Fi": "Nur über WLAN", "Ждать сеть без лимита": "Auf ein Netz ohne Limit warten",
+    "По расписанию": "Nach Zeitplan", "Запуск в заданное время": "Startet zur gewählten Zeit",
+    "Отложить": "Zurückstellen", "Запустить вручную": "Selbst starten",
+    "Максимум (4K)": "Maximum (4K)",
+    "Очередь": "Warteschlange", "Отложено": "Zurückgestellt", "История": "Verlauf",
+    "Получаю информацию о видео…": "Videodaten werden geholt…",
+    "в очереди": "in der Warteschlange", "ожидает слота": "wartet auf einen Platz", "на паузе": "pausiert",
+    "видео": "Video", "аудио": "Audio", "склейка": "Zusammenfügen", "в mp3": "zu MP3",
+    "склеиваю дорожки…": "Spuren werden zusammengefügt…", "конвертирую в mp3…": "wird zu MP3 konvertiert…",
+    "осталось": "übrig", "из": "von", "загружено": "geladen", "без cookies": "ohne Cookies",
+    "не удалось скачать": "Download fehlgeschlagen", "превью": "Vorschau",
+    "Ждёт подключения к Wi-Fi": "Wartet auf WLAN",
+    "Ждёт ручного запуска": "Wartet auf manuellen Start",
+    "Запуск по расписанию": "Geplant für", "Плейлист": "Playlist",
+    "Пауза": "Pause", "Продолжить": "Fortsetzen", "Отменить": "Abbrechen", "Убрать": "Entfernen",
+    "Повторить": "Wiederholen", "Запустить сейчас": "Jetzt starten",
+    "Показать в Finder": "Im Finder zeigen", "Скачать снова": "Erneut laden",
+    "Очистить историю": "Verlauf leeren", "Очистить очередь": "Warteschlange leeren",
+    "Пауза для всех": "Alle pausieren", "Продолжить все": "Alle fortsetzen",
+    "Повторить упавшие": "Fehlgeschlagene wiederholen", "Убрать всё": "Alle entfernen",
+    "Показать файл": "Datei zeigen", "Не надо": "Nein danke", "Готово": "Fertig",
+    "Обзор…": "Auswählen…", "Обновить yt-dlp": "yt-dlp aktualisieren", "Журнал": "Protokoll",
+    "Открыть файл в Finder": "Protokolldatei im Finder zeigen",
+    // --- мастер первого запуска
+    "Добро пожаловать в YTLoader": "Willkommen bei YTLoader",
+    "Скачивает видео и плейлисты с YouTube через yt-dlp — без браузера и терминала. Проверим, что всё на месте, и можно начинать.":
+      "Lädt Videos und Playlists von YouTube per yt-dlp — ohne Browser, ohne Terminal. Wir prüfen kurz, ob alles da ist, dann kann's losgehen.",
+    "Проверка компонентов": "Komponenten prüfen",
+    "Приложению нужны эти программы — обычно они уже внутри.": "Die App braucht diese Programme — meist sind sie schon eingebaut.",
+    "Проверить": "Prüfen", "Устанавливаю…": "Installiere…", "Проверяем…": "Prüfe…",
+    "Не найден": "Nicht gefunden", "Установить": "Installieren",
+    "Папка для загрузок": "Download-Ordner", "Изменить": "Ändern",
+    "Всё готово": "Alles bereit",
+    "Вставляйте ссылки — можно сразу несколько, плейлисты разворачиваются сами.":
+      "Links einfügen — auch mehrere auf einmal, Playlists entfalten sich von selbst.",
+    "Начать": "Los geht's", "Далее": "Weiter", "Поехали!": "Auf geht's!", "Пропустить": "Überspringen",
+    "{done} из {total} готово": "{done} von {total} fertig",
+    "{n} качается": "{n} wird geladen", "{n} с ошибкой": "{n} fehlgeschlagen",
+    "В очереди {n}": "{n} in der Warteschlange", "Повторить упавшие · {n}": "Fehlgeschlagene wiederholen · {n}",
+    "и ещё {n}": "und {n} weitere",
+    "Перетащите сюда ссылку на видео": "Video-Link hierher ziehen",
+    "или вставьте её в поле выше и нажмите «Добавить»":
+      "oder oben einfügen und „Hinzufügen“ drücken",
+    "работает и плейлист, и канал целиком": "Playlists und ganze Kanäle gehen auch",
+    "Отпустите — добавлю в очередь": "Loslassen — kommt in die Warteschlange",
+    "Нет отложенных загрузок": "Nichts zurückgestellt",
+    "выберите «Только по Wi-Fi» при добавлении": "beim Hinzufügen „Nur über WLAN“ wählen",
+    "Пока ничего не скачано": "Noch nichts geladen",
+    "Ничего не нашлось по запросу «{q}»": "Nichts gefunden für „{q}“",
+    "Поиск по названию и каналу": "Nach Titel und Kanal suchen",
+    "Не нашёл ссылок — вставьте полный адрес со https://":
+      "Keine Links gefunden — bitte eine vollständige Adresse mit https:// einfügen",
+    "Запустил обновление yt-dlp…": "yt-dlp wird aktualisiert…",
+    "Ссылка в буфере:": "Link in der Zwischenablage:",
+    "Уже скачано": "Schon geladen",
+    "yt-dlp не найден.": "yt-dlp nicht gefunden.",
+    "Установите": "Installieren:", "и перезапустите.": "und neu starten.",
+    "Нет JavaScript-движка.": "Keine JavaScript-Laufzeit.",
+    "Без него YouTube отдаёт ссылки, которые падают с 403:":
+      "Ohne sie liefert YouTube Links, die mit 403 scheitern:",
+    "ffmpeg не найден.": "ffmpeg nicht gefunden.",
+    "Без него не будет mp3 и склейки 1080p+:": "Ohne ihn kein MP3 und kein Zusammenfügen ab 1080p:",
+    "ffprobe не найден.": "ffprobe nicht gefunden.",
+    "Без него упадут главы, фрагменты и SponsorBlock. Он ставится вместе с ffmpeg:":
+      "Kapitel, Ausschnitte und SponsorBlock scheitern. Kommt zusammen mit ffmpeg:",
+    "Загрузка": "Herunterladen", "Что качать вместе с видео": "Zusätzlich zum Video laden",
+    "Поведение": "Verhalten", "Оформление": "Darstellung", "Диагностика": "Diagnose",
+    "Папка сохранения": "Zielordner", "Качество": "Qualität", "Одновременно": "Gleichzeitig",
+    "Лимит скорости": "Geschwindigkeitslimit", "Раскладка по папкам": "Ordnerstruktur",
+    "Кодек видео": "Video-Codec", "Плотность списка": "Listendichte",
+    "Cookies из браузера — нужны для приватных и возрастных видео":
+      "Browser-Cookies — nötig für private und altersbeschränkte Videos",
+    "Шаблон имени файла": "Dateinamen-Vorlage", "Субтитры": "Untertitel",
+    "Не использовать": "Nicht verwenden", "Не скачивать": "Nicht laden",
+    "Русские и английские": "Russisch und Englisch", "Все доступные": "Alle verfügbaren",
+    "Без ограничения": "Ohne Limit", "Всё в одну папку": "Alles in einen Ordner",
+    "Подпапки по каналам": "Unterordner je Kanal", "Подпапки по плейлистам": "Unterordner je Playlist",
+    "Любой — что отдаст YouTube": "Beliebig — was YouTube liefert",
+    "Обычно AV1: меньше весит": "Meist AV1: kleinere Dateien",
+    "Открывается в Quick Look и Final Cut": "Öffnet sich in Quick Look und Final Cut",
+    "Предпочитать AV1": "AV1 bevorzugen", "Меньше размер, хуже совместимость": "Kleiner, schlechter kompatibel",
+    "Карточки": "Karten", "Компактные карточки": "Kompakte Karten", "Плотный список": "Dichte Liste",
+    "Вшивать субтитры в файл": "Untertitel einbetten",
+    "Иначе рядом ляжет отдельный .srt": "Sonst liegt eine separate .srt daneben",
+    "Главы": "Kapitel", "Разделы ролика видны в плеере": "Abschnitte erscheinen im Player",
+    "Вырезать спонсорские вставки": "Sponsorenblöcke entfernen", "По базе SponsorBlock": "Laut SponsorBlock",
+    "На мобильной сети уходит в «Отложено»": "Im Mobilfunknetz wird zurückgestellt",
+    "Продолжать после перезапуска": "Nach Neustart fortsetzen",
+    "Иначе очередь ждёт нажатия": "Sonst wartet die Warteschlange auf Sie",
+    "Предлагать ссылку из буфера": "Link aus der Zwischenablage anbieten",
+    "При возврате в окно": "Beim Zurückkehren ins Fenster",
+    "Обновлять yt-dlp сам": "yt-dlp automatisch aktualisieren",
+    "Раз в неделю и сразу после отказа YouTube": "Wöchentlich und sofort nach einer YouTube-Ablehnung",
+    "Уведомлять о завершении": "Bei Abschluss benachrichtigen",
+    "Системное уведомление и звук": "Systemmitteilung und Ton",
+    "Прогресс на значке в Dock": "Fortschritt im Dock-Symbol",
+    "Процент и счётчик, пока окно свёрнуто": "Prozent und Zähler bei geschlossenem Fenster",
+    "Значок в строке меню": "Symbol in der Menüleiste",
+    "Очередь и прогресс без открытия окна": "Warteschlange und Fortschritt ohne Fenster",
+    "Акцентный цвет — им же красится значок в Dock":
+      "Akzentfarbe — auch für das Dock-Symbol",
+    "Что нашлось на этой машине": "Was auf diesem Mac gefunden wurde",
+    "JS-движок": "JS-Laufzeit", "окно": "Fenster", "не найден": "nicht gefunden",
+    "не найден — YouTube будет отдавать 403": "nicht gefunden — YouTube antwortet mit 403",
+    "не найден — сломаются главы, фрагменты и SponsorBlock":
+      "nicht gefunden — Kapitel, Ausschnitte und SponsorBlock scheitern",
+    "загружаю журнал…": "Protokoll wird geladen…",
+    "Язык": "Sprache", "Как в системе": "Wie im System",
+    "Б": "B", "КБ": "KB", "МБ": "MB", "ГБ": "GB", "МБ/с": "MB/s",
+  },
+
+  fr: {
+    "Светлая тема": "Thème clair", "Тёмная тема": "Thème sombre",
+    "Настройки (⌘,)": "Réglages (⌘,)", "Настройки": "Réglages",
+    "нет сети": "pas de réseau", "активн.": "en cours",
+    "Вставьте ссылки YouTube — по одной в строке, можно плейлист":
+      "Collez des liens YouTube — un par ligne, les playlists fonctionnent aussi",
+    "Видео": "Vidéo", "Добавить": "Ajouter",
+    "Фрагмент": "Extrait", "Скачать только кусок ролика": "Télécharger seulement une partie",
+    "Фрагмент ролика:": "Extrait :", "от 00:05:00": "de 00:05:00", "до 00:12:00": "à 00:12:00",
+    "пусто — от начала и до конца": "vide = du début à la fin",
+    "Начать сразу": "Démarrer tout de suite", "Встать в очередь и качать": "Mettre en file et télécharger",
+    "Только по Wi-Fi": "Wi-Fi uniquement", "Ждать сеть без лимита": "Attendre un réseau sans limite",
+    "По расписанию": "Programmé", "Запуск в заданное время": "Démarre à l'heure choisie",
+    "Отложить": "Mettre de côté", "Запустить вручную": "Démarrer vous-même",
+    "Максимум (4K)": "Maximum (4K)",
+    "Очередь": "File", "Отложено": "En attente", "История": "Historique",
+    "Получаю информацию о видео…": "Récupération des infos…",
+    "в очереди": "en file", "ожидает слота": "attend une place", "на паузе": "en pause",
+    "видео": "vidéo", "аудио": "audio", "склейка": "fusion", "в mp3": "en mp3",
+    "склеиваю дорожки…": "fusion des pistes…", "конвертирую в mp3…": "conversion en mp3…",
+    "осталось": "restant", "из": "sur", "загружено": "téléchargé", "без cookies": "sans cookies",
+    "не удалось скачать": "échec du téléchargement", "превью": "aperçu",
+    "Ждёт подключения к Wi-Fi": "Attend le Wi-Fi",
+    "Ждёт ручного запуска": "Attend un démarrage manuel",
+    "Запуск по расписанию": "Programmé pour", "Плейлист": "Playlist",
+    "Пауза": "Pause", "Продолжить": "Reprendre", "Отменить": "Annuler", "Убрать": "Retirer",
+    "Повторить": "Réessayer", "Запустить сейчас": "Démarrer",
+    "Показать в Finder": "Afficher dans le Finder", "Скачать снова": "Retélécharger",
+    "Очистить историю": "Vider l'historique", "Очистить очередь": "Vider la file",
+    "Пауза для всех": "Tout mettre en pause", "Продолжить все": "Tout reprendre",
+    "Повторить упавшие": "Réessayer les échecs", "Убрать всё": "Tout retirer",
+    "Показать файл": "Afficher le fichier", "Не надо": "Non merci", "Готово": "Terminé",
+    "Обзор…": "Parcourir…", "Обновить yt-dlp": "Mettre à jour yt-dlp", "Журнал": "Journal",
+    "Открыть файл в Finder": "Afficher le journal dans le Finder",
+    // --- assistant de premier lancement
+    "Добро пожаловать в YTLoader": "Bienvenue dans YTLoader",
+    "Скачивает видео и плейлисты с YouTube через yt-dlp — без браузера и терминала. Проверим, что всё на месте, и можно начинать.":
+      "Télécharge vidéos et playlists YouTube via yt-dlp — sans navigateur, sans terminal. Vérifions que tout est prêt, puis c'est parti.",
+    "Проверка компонентов": "Vérification des composants",
+    "Приложению нужны эти программы — обычно они уже внутри.": "L'application a besoin de ces outils — ils sont généralement déjà inclus.",
+    "Проверить": "Vérifier", "Устанавливаю…": "Installation…", "Проверяем…": "Vérification…",
+    "Не найден": "Introuvable", "Установить": "Installer",
+    "Папка для загрузок": "Dossier de téléchargement", "Изменить": "Changer",
+    "Всё готово": "Tout est prêt",
+    "Вставляйте ссылки — можно сразу несколько, плейлисты разворачиваются сами.":
+      "Collez des liens — plusieurs à la fois si besoin, les playlists se déplient toutes seules.",
+    "Начать": "Commencer", "Далее": "Suivant", "Поехали!": "C'est parti !", "Пропустить": "Passer",
+    "{done} из {total} готово": "{done} sur {total} terminés",
+    "{n} качается": "{n} en cours", "{n} с ошибкой": "{n} en échec",
+    "В очереди {n}": "{n} en file", "Повторить упавшие · {n}": "Réessayer les échecs · {n}",
+    "и ещё {n}": "et {n} de plus",
+    "Перетащите сюда ссылку на видео": "Déposez ici un lien vidéo",
+    "или вставьте её в поле выше и нажмите «Добавить»":
+      "ou collez-le dans le champ ci-dessus et appuyez sur Ajouter",
+    "работает и плейлист, и канал целиком": "playlists et chaînes entières fonctionnent",
+    "Отпустите — добавлю в очередь": "Relâchez — je le mets en file",
+    "Нет отложенных загрузок": "Rien en attente",
+    "выберите «Только по Wi-Fi» при добавлении": "choisissez Wi-Fi uniquement à l'ajout",
+    "Пока ничего не скачано": "Rien de téléchargé pour l'instant",
+    "Ничего не нашлось по запросу «{q}»": "Aucun résultat pour « {q} »",
+    "Поиск по названию и каналу": "Rechercher par titre et chaîne",
+    "Не нашёл ссылок — вставьте полный адрес со https://":
+      "Aucun lien trouvé — collez une adresse complète commençant par https://",
+    "Запустил обновление yt-dlp…": "Mise à jour de yt-dlp…",
+    "Ссылка в буфере:": "Lien dans le presse-papiers :",
+    "Уже скачано": "Déjà téléchargé",
+    "yt-dlp не найден.": "yt-dlp introuvable.",
+    "Установите": "Installez", "и перезапустите.": "puis relancez.",
+    "Нет JavaScript-движка.": "Pas de moteur JavaScript.",
+    "Без него YouTube отдаёт ссылки, которые падают с 403:":
+      "Sans lui, YouTube renvoie des liens qui échouent en 403 :",
+    "ffmpeg не найден.": "ffmpeg introuvable.",
+    "Без него не будет mp3 и склейки 1080p+:": "Sans lui, pas de mp3 ni de fusion 1080p+ :",
+    "ffprobe не найден.": "ffprobe introuvable.",
+    "Без него упадут главы, фрагменты и SponsorBlock. Он ставится вместе с ffmpeg:":
+      "Chapitres, extraits et SponsorBlock échoueront. Il vient avec ffmpeg :",
+    "Загрузка": "Téléchargement", "Что качать вместе с видео": "À télécharger avec la vidéo",
+    "Поведение": "Comportement", "Оформление": "Apparence", "Диагностика": "Diagnostic",
+    "Папка сохранения": "Dossier de destination", "Качество": "Qualité", "Одновременно": "Simultanément",
+    "Лимит скорости": "Limite de vitesse", "Раскладка по папкам": "Organisation des dossiers",
+    "Кодек видео": "Codec vidéo", "Плотность списка": "Densité de la liste",
+    "Cookies из браузера — нужны для приватных и возрастных видео":
+      "Cookies du navigateur — nécessaires pour les vidéos privées et soumises à âge",
+    "Шаблон имени файла": "Modèle de nom de fichier", "Субтитры": "Sous-titres",
+    "Не использовать": "Ne pas utiliser", "Не скачивать": "Ne pas télécharger",
+    "Русские и английские": "Russe et anglais", "Все доступные": "Tous disponibles",
+    "Без ограничения": "Sans limite", "Всё в одну папку": "Tout dans un dossier",
+    "Подпапки по каналам": "Sous-dossiers par chaîne", "Подпапки по плейлистам": "Sous-dossiers par playlist",
+    "Любой — что отдаст YouTube": "Peu importe — ce que donne YouTube",
+    "Обычно AV1: меньше весит": "Souvent AV1 : fichiers plus légers",
+    "Открывается в Quick Look и Final Cut": "S'ouvre dans Coup d'œil et Final Cut",
+    "Предпочитать AV1": "Préférer AV1", "Меньше размер, хуже совместимость": "Plus léger, moins compatible",
+    "Карточки": "Cartes", "Компактные карточки": "Cartes compactes", "Плотный список": "Liste dense",
+    "Вшивать субтитры в файл": "Intégrer les sous-titres",
+    "Иначе рядом ляжет отдельный .srt": "Sinon un .srt séparé est enregistré à côté",
+    "Главы": "Chapitres", "Разделы ролика видны в плеере": "Les sections apparaissent dans le lecteur",
+    "Вырезать спонсорские вставки": "Couper les passages sponsorisés", "По базе SponsorBlock": "Via SponsorBlock",
+    "На мобильной сети уходит в «Отложено»": "Sur réseau mobile, passe en attente",
+    "Продолжать после перезапуска": "Reprendre après redémarrage",
+    "Иначе очередь ждёт нажатия": "Sinon la file attend votre action",
+    "Предлагать ссылку из буфера": "Proposer le lien du presse-papiers",
+    "При возврате в окно": "Au retour dans la fenêtre",
+    "Обновлять yt-dlp сам": "Mettre yt-dlp à jour tout seul",
+    "Раз в неделю и сразу после отказа YouTube": "Chaque semaine, et dès un refus de YouTube",
+    "Уведомлять о завершении": "Notifier à la fin",
+    "Системное уведомление и звук": "Notification système et son",
+    "Прогресс на значке в Dock": "Progression sur l'icône du Dock",
+    "Процент и счётчик, пока окно свёрнуто": "Pourcentage et compteur fenêtre fermée",
+    "Значок в строке меню": "Icône dans la barre des menus",
+    "Очередь и прогресс без открытия окна": "File et progression sans ouvrir la fenêtre",
+    "Акцентный цвет — им же красится значок в Dock":
+      "Couleur d'accent — utilisée aussi pour l'icône du Dock",
+    "Что нашлось на этой машине": "Ce qui a été trouvé sur cette machine",
+    "JS-движок": "Moteur JS", "окно": "fenêtre", "не найден": "introuvable",
+    "не найден — YouTube будет отдавать 403": "introuvable — YouTube répondra 403",
+    "не найден — сломаются главы, фрагменты и SponsorBlock":
+      "introuvable — chapitres, extraits et SponsorBlock casseront",
+    "загружаю журнал…": "chargement du journal…",
+    "Язык": "Langue", "Как в системе": "Comme le système",
+    "Б": "o", "КБ": "Ko", "МБ": "Mo", "ГБ": "Go", "МБ/с": "Mo/s",
+  },
+
+  es: {
+    "Светлая тема": "Tema claro", "Тёмная тема": "Tema oscuro",
+    "Настройки (⌘,)": "Ajustes (⌘,)", "Настройки": "Ajustes",
+    "нет сети": "sin red", "активн.": "activas",
+    "Вставьте ссылки YouTube — по одной в строке, можно плейлист":
+      "Pega enlaces de YouTube — uno por línea, las listas también valen",
+    "Видео": "Vídeo", "Добавить": "Añadir",
+    "Фрагмент": "Fragmento", "Скачать только кусок ролика": "Descargar solo un trozo del vídeo",
+    "Фрагмент ролика:": "Fragmento:", "от 00:05:00": "desde 00:05:00", "до 00:12:00": "hasta 00:12:00",
+    "пусто — от начала и до конца": "vacío = de principio a fin",
+    "Начать сразу": "Empezar ya", "Встать в очередь и качать": "A la cola y descargar",
+    "Только по Wi-Fi": "Solo por Wi-Fi", "Ждать сеть без лимита": "Esperar una red sin límite",
+    "По расписанию": "Programado", "Запуск в заданное время": "Empieza a la hora elegida",
+    "Отложить": "Aplazar", "Запустить вручную": "Empezar tú mismo",
+    "Максимум (4K)": "Máxima (4K)",
+    "Очередь": "Cola", "Отложено": "Aplazadas", "История": "Historial",
+    "Получаю информацию о видео…": "Obteniendo datos del vídeo…",
+    "в очереди": "en cola", "ожидает слота": "esperando hueco", "на паузе": "en pausa",
+    "видео": "vídeo", "аудио": "audio", "склейка": "uniendo", "в mp3": "a mp3",
+    "склеиваю дорожки…": "uniendo pistas…", "конвертирую в mp3…": "convirtiendo a mp3…",
+    "осталось": "quedan", "из": "de", "загружено": "descargado", "без cookies": "sin cookies",
+    "не удалось скачать": "no se pudo descargar", "превью": "vista previa",
+    "Ждёт подключения к Wi-Fi": "Esperando Wi-Fi",
+    "Ждёт ручного запуска": "Esperando que la inicies",
+    "Запуск по расписанию": "Programada para", "Плейлист": "Lista",
+    "Пауза": "Pausar", "Продолжить": "Reanudar", "Отменить": "Cancelar", "Убрать": "Quitar",
+    "Повторить": "Reintentar", "Запустить сейчас": "Empezar ya",
+    "Показать в Finder": "Mostrar en Finder", "Скачать снова": "Descargar otra vez",
+    "Очистить историю": "Vaciar historial", "Очистить очередь": "Vaciar cola",
+    "Пауза для всех": "Pausar todo", "Продолжить все": "Reanudar todo",
+    "Повторить упавшие": "Reintentar fallidas", "Убрать всё": "Quitar todo",
+    "Показать файл": "Mostrar archivo", "Не надо": "No hace falta", "Готово": "Listo",
+    "Обзор…": "Examinar…", "Обновить yt-dlp": "Actualizar yt-dlp", "Журнал": "Registro",
+    "Открыть файл в Finder": "Mostrar el registro en Finder",
+    // --- asistente de primer inicio
+    "Добро пожаловать в YTLoader": "Bienvenido a YTLoader",
+    "Скачивает видео и плейлисты с YouTube через yt-dlp — без браузера и терминала. Проверим, что всё на месте, и можно начинать.":
+      "Descarga vídeos y listas de YouTube con yt-dlp — sin navegador ni terminal. Comprobemos que todo esté listo y podamos empezar.",
+    "Проверка компонентов": "Comprobación de componentes",
+    "Приложению нужны эти программы — обычно они уже внутри.": "La app necesita estos programas — normalmente ya vienen incluidos.",
+    "Проверить": "Comprobar", "Устанавливаю…": "Instalando…", "Проверяем…": "Comprobando…",
+    "Не найден": "No encontrado", "Установить": "Instalar",
+    "Папка для загрузок": "Carpeta de descargas", "Изменить": "Cambiar",
+    "Всё готово": "Todo listo",
+    "Вставляйте ссылки — можно сразу несколько, плейлисты разворачиваются сами.":
+      "Pega enlaces — pueden ser varios a la vez, las listas de reproducción se despliegan solas.",
+    "Начать": "Empezar", "Далее": "Siguiente", "Поехали!": "¡Vamos!", "Пропустить": "Omitir",
+    "{done} из {total} готово": "{done} de {total} listas",
+    "{n} качается": "{n} descargando", "{n} с ошибкой": "{n} con error",
+    "В очереди {n}": "{n} en cola", "Повторить упавшие · {n}": "Reintentar fallidas · {n}",
+    "и ещё {n}": "y {n} más",
+    "Перетащите сюда ссылку на видео": "Arrastra aquí un enlace de vídeo",
+    "или вставьте её в поле выше и нажмите «Добавить»":
+      "o pégalo en el campo de arriba y pulsa Añadir",
+    "работает и плейлист, и канал целиком": "también valen listas y canales enteros",
+    "Отпустите — добавлю в очередь": "Suelta y lo pongo en la cola",
+    "Нет отложенных загрузок": "Nada aplazado",
+    "выберите «Только по Wi-Fi» при добавлении": "elige Solo por Wi-Fi al añadir",
+    "Пока ничего не скачано": "Todavía no hay descargas",
+    "Ничего не нашлось по запросу «{q}»": "Sin resultados para «{q}»",
+    "Поиск по названию и каналу": "Buscar por título y canal",
+    "Не нашёл ссылок — вставьте полный адрес со https://":
+      "No encontré enlaces — pega una dirección completa con https://",
+    "Запустил обновление yt-dlp…": "Actualizando yt-dlp…",
+    "Ссылка в буфере:": "Enlace en el portapapeles:",
+    "Уже скачано": "Ya descargado",
+    "yt-dlp не найден.": "yt-dlp no encontrado.",
+    "Установите": "Instala", "и перезапустите.": "y reinicia.",
+    "Нет JavaScript-движка.": "No hay motor de JavaScript.",
+    "Без него YouTube отдаёт ссылки, которые падают с 403:":
+      "Sin él YouTube da enlaces que fallan con 403:",
+    "ffmpeg не найден.": "ffmpeg no encontrado.",
+    "Без него не будет mp3 и склейки 1080p+:": "Sin él no hay mp3 ni unión de 1080p+:",
+    "ffprobe не найден.": "ffprobe no encontrado.",
+    "Без него упадут главы, фрагменты и SponsorBlock. Он ставится вместе с ffmpeg:":
+      "Capítulos, fragmentos y SponsorBlock fallarán. Viene con ffmpeg:",
+    "Загрузка": "Descarga", "Что качать вместе с видео": "Qué descargar junto al vídeo",
+    "Поведение": "Comportamiento", "Оформление": "Apariencia", "Диагностика": "Diagnóstico",
+    "Папка сохранения": "Carpeta de destino", "Качество": "Calidad", "Одновременно": "A la vez",
+    "Лимит скорости": "Límite de velocidad", "Раскладка по папкам": "Organización en carpetas",
+    "Кодек видео": "Códec de vídeo", "Плотность списка": "Densidad de la lista",
+    "Cookies из браузера — нужны для приватных и возрастных видео":
+      "Cookies del navegador — hacen falta para vídeos privados y con edad mínima",
+    "Шаблон имени файла": "Plantilla del nombre", "Субтитры": "Subtítulos",
+    "Не использовать": "No usar", "Не скачивать": "No descargar",
+    "Русские и английские": "Ruso e inglés", "Все доступные": "Todos los disponibles",
+    "Без ограничения": "Sin límite", "Всё в одну папку": "Todo en una carpeta",
+    "Подпапки по каналам": "Subcarpetas por canal", "Подпапки по плейлистам": "Subcarpetas por lista",
+    "Любой — что отдаст YouTube": "Cualquiera — lo que dé YouTube",
+    "Обычно AV1: меньше весит": "Suele ser AV1: ocupa menos",
+    "Открывается в Quick Look и Final Cut": "Se abre en Vista rápida y Final Cut",
+    "Предпочитать AV1": "Preferir AV1", "Меньше размер, хуже совместимость": "Ocupa menos, menos compatible",
+    "Карточки": "Tarjetas", "Компактные карточки": "Tarjetas compactas", "Плотный список": "Lista densa",
+    "Вшивать субтитры в файл": "Incrustar subtítulos",
+    "Иначе рядом ляжет отдельный .srt": "Si no, se guarda un .srt aparte",
+    "Главы": "Capítulos", "Разделы ролика видны в плеере": "Las secciones se ven en el reproductor",
+    "Вырезать спонсорские вставки": "Cortar patrocinios", "По базе SponsorBlock": "Según SponsorBlock",
+    "На мобильной сети уходит в «Отложено»": "En red móvil pasa a aplazadas",
+    "Продолжать после перезапуска": "Continuar tras reiniciar",
+    "Иначе очередь ждёт нажатия": "Si no, la cola espera a que pulses",
+    "Предлагать ссылку из буфера": "Ofrecer el enlace del portapapeles",
+    "При возврате в окно": "Al volver a la ventana",
+    "Обновлять yt-dlp сам": "Actualizar yt-dlp solo",
+    "Раз в неделю и сразу после отказа YouTube": "Cada semana y justo tras un rechazo de YouTube",
+    "Уведомлять о завершении": "Avisar al terminar",
+    "Системное уведомление и звук": "Notificación del sistema y sonido",
+    "Прогресс на значке в Dock": "Progreso en el icono del Dock",
+    "Процент и счётчик, пока окно свёрнуто": "Porcentaje y contador con la ventana cerrada",
+    "Значок в строке меню": "Icono en la barra de menús",
+    "Очередь и прогресс без открытия окна": "Cola y progreso sin abrir la ventana",
+    "Акцентный цвет — им же красится значок в Dock":
+      "Color de acento — también pinta el icono del Dock",
+    "Что нашлось на этой машине": "Qué se encontró en este equipo",
+    "JS-движок": "Motor JS", "окно": "ventana", "не найден": "no encontrado",
+    "не найден — YouTube будет отдавать 403": "no encontrado — YouTube responderá 403",
+    "не найден — сломаются главы, фрагменты и SponsorBlock":
+      "no encontrado — capítulos, fragmentos y SponsorBlock fallarán",
+    "загружаю журнал…": "cargando el registro…",
+    "Язык": "Idioma", "Как в системе": "Como el sistema",
+    "Б": "B", "КБ": "KB", "МБ": "MB", "ГБ": "GB", "МБ/с": "MB/s",
+  },
+};
+
+const LANGS = [
+  {label: "Как в системе", value: "auto"},
+  {label: "Русский", value: "ru"},
+  {label: "English", value: "en"},
+  {label: "Deutsch", value: "de"},
+  {label: "Français", value: "fr"},
+  {label: "Español", value: "es"},
+];
+
+let LANG = "ru";
+
+/** Перевод строки. Ключ — русский текст: нет перевода — вернётся он сам. */
+function t(ru, vars) {
+  const dict = I18N[LANG];
+  let out = (dict && dict[ru]) || ru;
+  if (vars) for (const k in vars) out = out.split("{" + k + "}").join(vars[k]);
+  return out;
+}
+
+/* Мост в Swift: команды уходят через messageHandlers,
+   состояние приходит пушем вызовом window.applyState. */
+let LAST = null;
+let TAB = "queue";
+let audioOnly = false;
+let settingsOpen = false;
+let openMenu = null;
+let toastTimer = null;
+let setupHidden = "";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function api(path, body) {
+  if (path === "/api/state") return Promise.resolve(LAST);
+  try {
+    window.webkit.messageHandlers.ytl.postMessage({path: path, body: body || {}});
+  } catch (e) {
+    console.error("мост в приложение недоступен:", e);
+  }
+  return Promise.resolve({ok: 1});
+}
+
+window.applyState = function (s) {
+  LAST = s;
+  render(s);
+  if (!s.settings.onboarded && !$("#onbHost")) openOnboarding();
+  else if ($("#onbHost")) syncOnboarding(s);
+};
+
+function toast(msg) {
+  let el = $("#toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; el.className = "toast";
+             document.querySelector(".shell").appendChild(el); }
+  el.textContent = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { const t = $("#toast"); if (t) t.remove(); }, 3800);
+}
+window.toast = toast;
+
+/* ---------------- форматирование ---------------- */
+function fmtBytes(n) {
+  if (!n) return "—";
+  if (n >= 1073741824) return (n / 1073741824).toFixed(2) + " " + t("ГБ");
+  if (n >= 1048576) return (n / 1048576).toFixed(1) + " " + t("МБ");
+  if (n >= 1024) return Math.round(n / 1024) + " " + t("КБ");
+  return n + " " + t("Б");
+}
+function fmtSpeed(b) { return b ? (b / 1048576).toFixed(1) + " " + t("МБ/с") : "—"; }
+function fmtTime(s) {
+  if (!s || s < 0) return "—";
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = Math.floor(s % 60);
+  return h ? h + ":" + String(m).padStart(2, "0") + ":" + String(ss).padStart(2, "0")
+           : m + ":" + String(ss).padStart(2, "0");
+}
+function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } }
+
+/* Акцент задаётся пользователем, поэтому светлый и тёмный оттенки
+   считаем в JS: color-mix() есть не во всех версиях WebKit. */
+function mix(hex, target, amount) {
+  const h = hex.replace("#", "");
+  const c = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16));
+  const t = target === "white" ? [255, 255, 255] : [0, 0, 0];
+  return "#" + c.map((v, i) => Math.round(v + (t[i] - v) * amount)
+                                   .toString(16).padStart(2, "0")).join("");
+}
+function applyAccent(c) {
+  const r = document.documentElement.style;
+  if (r.getPropertyValue("--accent") === c) return;
+  r.setProperty("--accent", c);
+  r.setProperty("--accentHi", mix(c, "white", 0.16));
+  r.setProperty("--accentLo", mix(c, "black", 0.22));
+}
+
+/* ---------------- иконки ---------------- */
+const CHECK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+  + 'stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4.5 4.5L19 7"/></svg>';
+const CHEV = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" '
+  + 'stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+
+/* ---------------- выпадающие меню ---------------- */
+const QUALITY = [
+  {label: "Максимум (4K)", value: "best"}, {label: "1440p", value: "1440p"},
+  {label: "1080p", value: "1080p"}, {label: "720p", value: "720p"}, {label: "480p", value: "480p"},
+];
+const START = [
+  {label: "Начать сразу", hint: "Встать в очередь и качать", value: ""},
+  {label: "Только по Wi-Fi", hint: "Ждать сеть без лимита", value: "wifi"},
+  {label: "По расписанию", hint: "Запуск в заданное время", value: "time"},
+  {label: "Отложить", hint: "Запустить вручную", value: "manual"},
+];
+const CONC = ["1", "2", "3", "4", "6"].map(v => ({label: v, value: v}));
+const SUBS = [
+  {label: "Не скачивать", value: "none"},
+  {label: "Русские и английские", value: "ru,en"},
+  {label: "Все доступные", value: "all"},
+];
+const SPEED = [
+  {label: "Без ограничения", value: ""}, {label: "1 МБ/с", value: "1M"},
+  {label: "3 МБ/с", value: "3M"}, {label: "5 МБ/с", value: "5M"}, {label: "10 МБ/с", value: "10M"},
+];
+const CODEC = [
+  {label: "Любой — что отдаст YouTube", value: "any", hint: "Обычно AV1: меньше весит"},
+  {label: "H.264", value: "h264", hint: "Открывается в Quick Look и Final Cut"},
+  {label: "Предпочитать AV1", value: "av1", hint: "Меньше размер, хуже совместимость"},
+];
+const DENSITY = [
+  {label: "Карточки", value: "normal"},
+  {label: "Компактные карточки", value: "compact"},
+  {label: "Плотный список", value: "list"},
+];
+const ORGANIZE = [
+  {label: "Всё в одну папку", value: "none"},
+  {label: "Подпапки по каналам", value: "channel"},
+  {label: "Подпапки по плейлистам", value: "playlist"},
+];
+const COOKIES = [
+  {label: "Chrome", value: "chrome"}, {label: "Firefox", value: "firefox"},
+  {label: "Safari", value: "safari"}, {label: "Edge", value: "edge"},
+  {label: "Brave", value: "brave"}, {label: "Не использовать", value: "none"},
+];
+
+const DD = {};   // id -> {value, options, onPick, wide, up}
+
+function ddInit(id, options, value, onPick, opts) {
+  const host = $("#" + id);
+  DD[id] = Object.assign({options, value, onPick, host}, opts || {});
+  host.querySelector(".ddbtn, .fieldbtn").onclick = e => {
+    e.stopPropagation();
+    openMenu = openMenu === id ? null : id;
+    renderMenus();
+  };
+  ddSet(id, value);
+}
+function ddSet(id, value) {
+  const d = DD[id];
+  if (!d) return;
+  d.value = value;
+  const o = d.options.find(o => o.value === value) || d.options[0];
+  const btn = d.host.querySelector(".ddbtn, .fieldbtn");
+  const val = btn.querySelector(".val");
+  if (val) val.textContent = o ? t(o.label) : value;
+}
+function renderMenus() {
+  Object.keys(DD).forEach(id => {
+    const d = DD[id];
+    if (!d.host || !d.host.isConnected) return;
+    const btn = d.host.querySelector(".ddbtn, .fieldbtn");
+    btn.classList.toggle("open", openMenu === id);
+    const old = d.host.querySelector(".menu");
+    if (old) old.remove();
+    if (openMenu !== id) return;
+    const menu = document.createElement("div");
+    menu.className = "menu" + (d.wide ? " wide" : "") + (d.up ? " up" : "");
+    menu.innerHTML = d.options.map(o =>
+      `<button class="menuitem${o.value === d.value ? " on" : ""}" data-v="${esc(o.value)}">`
+      + (o.hint ? `<span class="lbl"><span>${esc(t(o.label))}</span><span class="hint">${esc(t(o.hint))}</span></span>`
+                : `<span>${esc(t(o.label))}</span>`)
+      + `<span class="check">${CHECK}</span></button>`).join("");
+    menu.onclick = e => {
+      const b = e.target.closest("[data-v]");
+      if (!b) return;
+      e.stopPropagation();
+      ddSet(id, b.dataset.v);
+      openMenu = null;
+      renderMenus();
+      if (d.onPick) d.onPick(b.dataset.v);
+    };
+    d.host.appendChild(menu);
+    // внутри прокручиваемой панели меню может уехать за нижний край
+    setTimeout(() => { if (menu.scrollIntoView) menu.scrollIntoView({block: "nearest"}); }, 0);
+  });
+}
+document.addEventListener("click", () => { if (openMenu) { openMenu = null; renderMenus(); } });
+
+/* ================================================================
+   Инкрементальный рендер: карточки создаются один раз и дальше
+   только обновляются — иначе полоса и превью мигали бы каждые 0.4 с.
+   ================================================================ */
+const cards = new Map();
+const PHASE_LABEL = {video: "видео", audio: "аудио", merge: "склейка", convert: "в mp3"};
+const phaseLabel = p => t(PHASE_LABEL[p] || p);
+
+function buildCard() {
+  const root = document.createElement("div");
+  root.className = "card fresh";
+  root.innerHTML =
+    `<div class="thumb"><span class="ph">превью</span><span class="dur" style="display:none"></span></div>
+     <div class="body">
+       <div class="titlerow"><div class="ttl"></div>
+         <div class="pills"><span class="pill q"></span><span class="pill f"></span></div></div>
+       <div class="sub"></div>
+       <div class="badge" style="display:none"></div>
+       <div class="track"><div class="bar" style="width:0%"></div></div>
+       <div class="meta"><span class="left"></span>
+         <span class="right"><span class="phase" style="display:none"></span><span class="rtext"></span></span></div>
+     </div>
+     <div class="actions"></div>`;
+  setTimeout(() => root.classList.remove("fresh"), 300);
+  return {
+    root,
+    thumb: root.querySelector(".thumb"), ph: root.querySelector(".ph"),
+    dur: root.querySelector(".dur"), img: null,
+    ttl: root.querySelector(".ttl"),
+    pillQ: root.querySelector(".pill.q"), pillF: root.querySelector(".pill.f"),
+    sub: root.querySelector(".sub"), badge: root.querySelector(".badge"),
+    track: root.querySelector(".track"), bar: root.querySelector(".bar"),
+    left: root.querySelector(".meta .left"), right: root.querySelector(".meta .rtext"),
+    phase: root.querySelector(".meta .phase"),
+    actions: root.querySelector(".actions"),
+    segs: [], sig: {}
+  };
+}
+
+function setText(node, v) { if (node.textContent !== v) node.textContent = v; }
+function setShown(node, on) { const d = on ? "" : "none"; if (node.style.display !== d) node.style.display = d; }
+function setCls(node, cls, on) { if (node.classList.contains(cls) !== on) node.classList.toggle(cls, on); }
+
+function updateThumb(c, it) {
+  if (it.thumb && c.sig.thumb !== it.thumb) {
+    if (!c.img) {
+      c.img = document.createElement("img");
+      c.img.loading = "lazy";
+      c.img.onerror = () => { if (c.img) { c.img.remove(); c.img = null; c.sig.thumb = null; } };
+      c.thumb.insertBefore(c.img, c.dur);
+    }
+    c.img.src = it.thumb;
+    c.sig.thumb = it.thumb;
+    setShown(c.ph, false);
+  }
+  setShown(c.dur, !!it.duration);
+  if (it.duration) setText(c.dur, fmtTime(it.duration));
+}
+
+function updatePills(c, it) {
+  setText(c.pillQ, it.quality === "audio" ? "audio" : it.quality);
+  setText(c.pillF, it.format);
+  setCls(c.pillF, "mp3", it.format === "mp3");
+}
+
+/* Полоса из участков — по одному на дорожку. Ширина участка
+   пропорциональна весу дорожки: переход с видео на звук выглядит
+   как продолжение, а не как рестарт. */
+function updateSegments(c, it) {
+  const streams = it.streams || [];
+  if (!streams.length) {
+    if (c.segs.length) { c.segs.forEach(s => s.wrap.remove()); c.segs = []; }
+    if (!c.track.contains(c.bar)) c.track.appendChild(c.bar);
+    return;
+  }
+  if (c.bar.parentNode === c.track) c.bar.remove();
+  while (c.segs.length > streams.length) c.segs.pop().wrap.remove();
+  while (c.segs.length < streams.length) {
+    const wrap = document.createElement("div");
+    wrap.className = "seg";
+    const fill = document.createElement("i");
+    wrap.appendChild(fill);
+    c.track.appendChild(wrap);
+    c.segs.push({wrap, fill});
+  }
+  const grand = streams.reduce((a, s) => a + (s.total || 0), 0) || 1;
+  streams.forEach((s, i) => {
+    const seg = c.segs[i];
+    const w = ((s.total || 0) * 100 / grand).toFixed(2) + "%";
+    if (seg.wrap.style.width !== w) seg.wrap.style.width = w;
+    const f = s.total ? Math.min(100, (s.done || 0) * 100 / s.total).toFixed(2) + "%" : "0%";
+    if (seg.fill.style.width !== f) seg.fill.style.width = f;
+    setCls(seg.wrap, "audio", s.kind === "audio");
+    setCls(seg.wrap, "pending", !!s.estimated);
+    setCls(seg.wrap, "active", !!s.active && it.status === "downloading");
+  });
+}
+
+function updateActions(c, sig, html) {
+  if (c.sig.actions === sig) return;
+  c.sig.actions = sig;
+  c.actions.innerHTML = html;
+}
+
+const STATUS_CLS = ["st-active","st-audio","st-paused","st-error","st-wait","st-done"];
+function setStatusStripe(el, cls) {
+  STATUS_CLS.forEach(x => setCls(el, x, x === cls));
+}
+
+function updateQueueCard(c, it) {
+  updateThumb(c, it);
+  setText(c.ttl, it.title);
+  updatePills(c, it);
+  setText(c.sub, (it.channel || hostOf(it.url)) + (it.noCookies ? " · " + t("без cookies") : ""));
+
+  const st = it.status;
+  const finishing = st === "downloading" && (it.stage === "merge" || it.stage === "convert");
+  const hasSegments = (it.streams || []).length > 0;
+  // между добавлением ссылки и первой строкой прогресса yt-dlp сам разбирает
+  // видео (и решает JS-задачку YouTube) — секунды две-пять это может занять.
+  // Раньше в этот момент полоса просто стояла на 0% как будто зависла —
+  // теперь честно показываем «Получаю информацию о видео…»
+  const preInfo = st === "downloading" && !finishing && !hasSegments && it.total === 0;
+  const indet = st === "resolving" || preInfo || (finishing && !hasSegments);
+
+  updateSegments(c, it);
+  setCls(c.track, "indet", indet);
+  setCls(c.track, "merging", finishing && hasSegments);
+  setCls(c.track, "paused", st === "paused" || st === "queued");
+  setCls(c.bar, "paused", st === "paused" || st === "queued");
+  setShown(c.track, st !== "error");
+  setShown(c.left.parentNode, st !== "error");
+  if (!hasSegments) {
+    if (!indet) {
+      const w = it.pct + "%";
+      if (c.sig.w !== w) { c.bar.style.width = w; c.sig.w = w; }
+    } else if (c.sig.w !== null) { c.bar.style.width = ""; c.sig.w = null; }
+  }
+
+  setShown(c.badge, st === "error");
+  if (st === "error") {
+    setCls(c.badge, "err", true);
+    const friendly = it.error || t("не удалось скачать");
+    const raw = (it.rawError && it.rawError !== friendly) ? "\n" + it.rawError : "";
+    setText(c.badge, friendly + raw);
+  }
+
+  let left = "", right = "", phase = "";
+  if (st === "resolving") { left = t("Получаю информацию о видео…"); }
+  else if (preInfo) { left = t("Получаю информацию о видео…"); }
+  else if (st === "downloading" && finishing) {
+    left = fmtBytes(it.downloaded) + " · 100%";
+    phase = it.stage;
+    right = t(it.stage === "merge" ? "склеиваю дорожки…" : "конвертирую в mp3…");
+  } else if (st === "downloading") {
+    left = fmtBytes(it.downloaded) + " " + t("из") + " " + fmtBytes(it.total) + " · " + it.pct + "%";
+    phase = it.stage === "audio" ? "audio" : "video";
+    right = fmtSpeed(it.speed) + " · " + t("осталось") + " " + fmtTime(it.eta);
+  } else if (st === "paused") {
+    left = fmtBytes(it.downloaded) + " " + t("из") + " " + fmtBytes(it.total) + " · " + it.pct + "%";
+    right = t("на паузе");
+  } else if (st === "queued") {
+    left = it.pct ? fmtBytes(it.downloaded) + " " + t("из") + " " + fmtBytes(it.total) + " · " + it.pct + "%" : t("в очереди");
+    right = t("ожидает слота");
+  }
+  setText(c.left, left);
+  setText(c.right, right);
+  setShown(c.phase, !!phase);
+  if (phase) {
+    setText(c.phase, phaseLabel(phase));
+    setCls(c.phase, "audio", phase === "audio");
+    setCls(c.phase, "merge", phase === "merge" || phase === "convert");
+  }
+
+  setStatusStripe(c.root,
+    st === "error" ? "st-error"
+    : st === "paused" || st === "queued" ? "st-paused"
+    : st === "downloading" && it.stage === "audio" ? "st-audio"
+    : "st-active");
+
+  const b = (cls, act, label) => `<button class="btn ${cls}" data-act="${act}" data-id="${it.id}">${label}</button>`;
+  let html = "";
+  if (st === "resolving") html = b("", "cancel", t("Отменить"));
+  else if (st === "downloading" || st === "queued")
+    html = b("solid", "pause", t("Пауза")) + b("", "deferWifi", t("Отложить")) + b("", "cancel", t("Отменить"));
+  else if (st === "paused") html = b("primary", "resume", t("Продолжить")) + b("", "cancel", t("Отменить"));
+  else if (st === "error") html = b("primary", "resume", t("Повторить")) + b("", "cancel", t("Убрать"));
+  updateActions(c, st + "|" + LANG, html);
+}
+
+const WAIT_LABEL = {time: v => t("Запуск по расписанию") + " · " + (v || ""),
+                    manual: () => t("Ждёт ручного запуска"),
+                    wifi: () => t("Ждёт подключения к Wi-Fi")};
+
+function updateDeferredCard(c, it) {
+  updateThumb(c, it);
+  setText(c.ttl, it.title);
+  updatePills(c, it);
+  setText(c.sub, (it.channel || hostOf(it.url)) + (it.pct ? " · " + t("загружено") + " " + it.pct + "%" : ""));
+  setShown(c.track, false);
+  setShown(c.left.parentNode, false);
+  setShown(c.badge, true);
+  setCls(c.badge, "wait", true);
+  setText(c.badge, (WAIT_LABEL[it.deferMode] || WAIT_LABEL.wifi)(it.deferTime));
+  setStatusStripe(c.root, "st-wait");
+  updateActions(c, "deferred|" + LANG,
+    `<button class="btn primary" data-act="resume" data-id="${it.id}">${t("Запустить сейчас")}</button>
+     <button class="btn" data-act="cancel" data-id="${it.id}">${t("Отменить")}</button>`);
+}
+
+function updateHistoryCard(c, it) {
+  updateThumb(c, it);
+  setText(c.ttl, it.title);
+  updatePills(c, it);
+  const folder = (it.filepath || "").replace(/\/[^/]*$/, "");
+  setText(c.sub, fmtBytes(it.total) + " · " + (it.dateLabel || "") + (folder ? " · " + folder : ""));
+  setShown(c.track, false);
+  setShown(c.left.parentNode, false);
+  setShown(c.badge, false);
+  setStatusStripe(c.root, "st-done");
+  updateActions(c, "history|" + LANG,
+    `<button class="btn solid" data-act="reveal" data-path="${esc(it.filepath)}">${t("Показать в Finder")}</button>
+     <button class="btn" data-act="again" data-url="${esc(it.url)}">${t("Скачать снова")}</button>`);
+}
+
+/* ================= группы плейлистов =================
+   Сорок роликов канала — это одна строка со свёрткой, а не сорок карточек.
+   Заголовок показывает общий прогресс и умеет пауза/отмена для всей группы. */
+const collapsed = new Set();
+const heads = new Map();
+
+function buildHead() {
+  const root = document.createElement("div");
+  root.className = "ghead";
+  root.innerHTML =
+    `<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+     <div class="gt"><div class="gtitle"></div><div class="gsub"></div></div>
+     <div class="gtrack"><div class="gfill" style="width:0%"></div></div>
+     <div class="gacts"></div>`;
+  return {root, title: root.querySelector(".gtitle"), sub: root.querySelector(".gsub"),
+          fill: root.querySelector(".gfill"), acts: root.querySelector(".gacts"), sig: {}};
+}
+
+function updateHead(h, g) {
+  const items = g.items;
+  const done = Math.max(0, (g.total || items.length) - items.length);
+  const downloaded = items.reduce((a, i) => a + (i.downloaded || 0), 0);
+  const total = items.reduce((a, i) => a + (i.total || 0), 0);
+  const active = items.filter(i => i.status === "downloading").length;
+  const failed = items.filter(i => i.status === "error").length;
+  const pct = total ? Math.min(100, downloaded * 100 / total) : 0;
+  const overall = (g.total ? (done + pct / 100 * items.length) / g.total : pct / 100) * 100;
+
+  setText(h.title, g.title || t("Плейлист"));
+  const parts = [t("{done} из {total} готово", {done, total: g.total || items.length})];
+  if (active) parts.push(t("{n} качается", {n: active}));
+  if (failed) parts.push(t("{n} с ошибкой", {n: failed}));
+  setText(h.sub, parts.join(" · "));
+  const w = overall.toFixed(1) + "%";
+  if (h.fill.style.width !== w) h.fill.style.width = w;
+  setCls(h.root, "closed", collapsed.has(g.gid));
+
+  const sig = `${active}|${failed}|${LANG}`;
+  if (h.sig.acts !== sig) {
+    h.sig.acts = sig;
+    const b = (cls, act, label) =>
+      `<button class="btn ${cls}" data-gact="${act}" data-gid="${g.gid}">${label}</button>`;
+    h.acts.innerHTML = (failed ? b("solid", "retry", t("Повторить упавшие")) : "")
+      + (active ? b("", "pause", t("Пауза")) : b("", "resume", t("Продолжить")))
+      + b("", "cancel", t("Убрать всё"));
+  }
+}
+
+/* Раскладываем очередь на ряды: одиночные карточки и группы. */
+function queueRows(items) {
+  const out = [], map = new Map();
+  for (const it of items) {
+    if (!it.groupId) { out.push({key: "i:" + it.id, item: it}); continue; }
+    let g = map.get(it.groupId);
+    if (!g) {
+      g = {gid: it.groupId, title: it.groupTitle, total: it.groupTotal, items: []};
+      map.set(it.groupId, g);
+      out.push({key: "g:" + it.groupId, group: g});
+    }
+    g.items.push(it);
+  }
+  const rows = [];
+  for (const r of out) {
+    rows.push(r);
+    if (r.group && !collapsed.has(r.group.gid))
+      for (const it of r.group.items) rows.push({key: "i:" + it.id, item: it, inGroup: true});
+  }
+  return rows;
+}
+
+let emptyEl = null;
+
+function renderRows(rows, list) {
+  const wanted = [];
+  const live = new Set();
+  for (const r of rows) {
+    live.add(r.key);
+    if (r.group) {
+      let h = heads.get(r.key);
+      if (!h) { h = buildHead(); heads.set(r.key, h); }
+      updateHead(h, r.group);
+      wanted.push(h.root);
+    } else {
+      const key = "q:" + r.item.id;
+      let c = cards.get(key);
+      if (!c) { c = buildCard(); cards.set(key, c); }
+      updateQueueCard(c, r.item);
+      setCls(c.root, "ingroup", !!r.inGroup);
+      wanted.push(c.root);
+    }
+  }
+  for (const [key, h] of heads) {
+    if (live.has(key)) continue;
+    if (h.root.parentNode === list) h.root.remove();
+    heads.delete(key);
+  }
+  for (const [key, c] of cards) {
+    if (!key.startsWith("q:")) continue;
+    if (live.has("i:" + key.slice(2))) continue;
+    if (c.root.parentNode === list) c.root.remove();
+    cards.delete(key);
+  }
+  const current = Array.from(list.children).filter(n => n.classList.contains("card") || n.classList.contains("ghead"));
+  const same = current.length === wanted.length && current.every((n, i) => n === wanted[i]);
+  if (!same) wanted.forEach(n => list.appendChild(n));
+}
+
+function renderList(items, kind, updater, emptyHtml) {
+  const list = $("#list");
+  const wanted = [];
+  for (const it of items) {
+    const key = kind + ":" + it.id;
+    let c = cards.get(key);
+    if (!c) { c = buildCard(); cards.set(key, c); }
+    updater(c, it);
+    wanted.push(c.root);
+  }
+  const live = new Set(items.map(it => kind + ":" + it.id));
+  for (const [key, c] of cards) {
+    const mine = key.startsWith(kind + ":");
+    if (mine && live.has(key)) continue;
+    if (c.root.parentNode === list) c.root.remove();
+    if (mine) cards.delete(key);
+  }
+  const current = Array.from(list.children).filter(n => n.classList.contains("card"));
+  const same = current.length === wanted.length && current.every((n, i) => n === wanted[i]);
+  if (!same) wanted.forEach(n => list.appendChild(n));
+
+  if (!wanted.length) {
+    if (!emptyEl || emptyEl.parentNode !== list) {
+      emptyEl = document.createElement("div");
+      emptyEl.className = "empty";
+      list.appendChild(emptyEl);
+    }
+    if (emptyEl.innerHTML !== emptyHtml) emptyEl.innerHTML = emptyHtml;
+  } else if (emptyEl && emptyEl.parentNode === list) { emptyEl.remove(); emptyEl = null; }
+}
+
+/* Массовые действия: на сорока позициях без них не обойтись. */
+let bulkEl = null;
+function syncBulk(items) {
+  const list = $("#list");
+  if (!items || items.length < 2) {
+    if (bulkEl && bulkEl.parentNode) bulkEl.remove();
+    return;
+  }
+  if (!bulkEl) {
+    bulkEl = document.createElement("div");
+    bulkEl.className = "bulk";
+    bulkEl.addEventListener("click", e => {
+      const b = e.target.closest("[data-bulk]");
+      if (!b) return;
+      const map = {pause: "/api/pauseAll", resume: "/api/resumeAll",
+                   retry: "/api/retryFailed", cancel: "/api/cancelAll"};
+      api(map[b.dataset.bulk], {});
+    });
+  }
+  const active = items.filter(i => i.status === "downloading" || i.status === "queued").length;
+  const paused = items.filter(i => i.status === "paused").length;
+  const failed = items.filter(i => i.status === "error").length;
+  const sig = `${items.length}|${active}|${paused}|${failed}|${LANG}`;
+  if (bulkEl.dataset.sig !== sig) {
+    bulkEl.dataset.sig = sig;
+    const b = (cls, act, label) => `<button class="btn ${cls}" data-bulk="${act}">${label}</button>`;
+    bulkEl.innerHTML = `<span class="n">${t("В очереди {n}", {n: items.length})}</span>`
+      + (failed ? b("solid", "retry", t("Повторить упавшие · {n}", {n: failed})) : "")
+      + (active ? b("", "pause", t("Пауза для всех")) : "")
+      + (paused ? b("", "resume", t("Продолжить все")) : "")
+      + b("", "cancel", t("Очистить очередь"));
+  }
+  if (bulkEl.parentNode !== list) list.insertBefore(bulkEl, list.firstChild);
+  else if (list.firstChild !== bulkEl) list.insertBefore(bulkEl, list.firstChild);
+}
+
+/* Пустая очередь — сразу зона перетаскивания: про drag&drop иначе никто не узнает. */
+let dropzoneEl = null;
+function syncDropzone(show) {
+  const list = $("#list");
+  if (show && !dropzoneEl) {
+    dropzoneEl = document.createElement("div");
+    dropzoneEl.className = "dropzone";
+    dropzoneEl.innerHTML =
+      `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+       <div class="big">${t("Перетащите сюда ссылку на видео")}</div>
+       <div class="sm">${t("или вставьте её в поле выше и нажмите «Добавить»")}<br>
+         ${t("работает и плейлист, и канал целиком")}</div>`;
+  }
+  if (show) {
+    if (dropzoneEl.parentNode !== list) list.appendChild(dropzoneEl);
+  } else if (dropzoneEl && dropzoneEl.parentNode) dropzoneEl.remove();
+}
+
+let searchText = "";
+let searchEl = null;
+function syncSearch(show) {
+  const list = $("#list");
+  if (show && !searchEl) {
+    searchEl = document.createElement("div");
+    searchEl.className = "search";
+    searchEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="var(--faint)" stroke-width="2.6" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input type="text" placeholder="${t("Поиск по названию и каналу")}">`;
+    searchEl.querySelector("input").addEventListener("input", e => {
+      searchText = e.target.value;
+      if (LAST) render(LAST);
+    });
+  }
+  if (show) {
+    if (searchEl.parentNode !== list) list.insertBefore(searchEl, list.firstChild);
+    else if (list.firstChild !== searchEl) list.insertBefore(searchEl, list.firstChild);
+  } else if (searchEl && searchEl.parentNode) { searchEl.remove(); searchText = ""; }
+}
+
+let clearBtn = null;
+function syncClearButton(show) {
+  const list = $("#list");
+  if (show && !clearBtn) {
+    clearBtn = document.createElement("button");
+    clearBtn.className = "btn";
+    clearBtn.style.cssText = "align-self:center;margin-top:6px";
+    clearBtn.dataset.act = "clearHistory";
+    clearBtn.textContent = t("Очистить историю");
+  }
+  if (show) list.appendChild(clearBtn);
+  else if (clearBtn && clearBtn.parentNode) clearBtn.remove();
+}
+
+/* ---------------- общий рендер ---------------- */
+const ORDER = {downloading: 0, resolving: 1, queued: 2, paused: 3, error: 4};
+
+function render(s) {
+  applyLang(s);
+  setCls(document.body, "dark", s.settings.theme !== "light");
+  const density = s.settings.density || (s.settings.compact ? "compact" : "normal");
+  setCls(document.body, "compact", density === "compact");
+  setCls(document.body, "list", density === "list");
+  applyAccent(s.settings.accent || "#007AFF");
+  setCls($("#themeLight"), "on", s.settings.theme === "light");
+  setCls($("#themeDark"), "on", s.settings.theme !== "light");
+  setCls($("#gear"), "on", settingsOpen);
+
+  const net = s.net, chip = $("#netchip");
+  const colors = {wifi: "#34C759", ethernet: "#34C759", cellular: "#FF9F0A", none: "#FF453A"};
+  const col = colors[net.kind] || colors.none;
+  const dot = chip.querySelector(".dot");
+  if (dot.style.background !== col) dot.style.background = col;
+  setText(chip.querySelector("span:last-child"), net.kind === "none" ? t("нет сети") : net.label);
+
+  const sc = $("#speedchip");
+  setShown(sc, !!s.totals.active);
+  if (s.totals.active)
+    setText(sc.querySelector(".txt"), fmtSpeed(s.totals.speed) + " · " + s.totals.active + " " + t("активн."));
+
+  const sb = $("#setupbar");
+  let setup = "", key = "";
+  const warn = (head, tail, cmd) =>
+    `<b>${t(head)}</b>&nbsp;<span style="opacity:.85">${t(tail)} <code>${cmd}</code>${
+      head === "yt-dlp не найден." ? " " + t("и перезапустите.") : ""}</span>`;
+  if (!s.env.ytdlp) { key = "ytdlp";
+    setup = warn("yt-dlp не найден.", "Установите", "brew install yt-dlp"); }
+  else if (!s.env.js) { key = "js";
+    setup = warn("Нет JavaScript-движка.", "Без него YouTube отдаёт ссылки, которые падают с 403:", "brew install deno"); }
+  else if (!s.env.ffmpeg) { key = "ffmpeg";
+    setup = warn("ffmpeg не найден.", "Без него не будет mp3 и склейки 1080p+:", "brew install ffmpeg"); }
+  else if (!s.env.ffprobe) { key = "ffprobe";
+    setup = warn("ffprobe не найден.", "Без него упадут главы, фрагменты и SponsorBlock. Он ставится вместе с ffmpeg:", "brew install ffmpeg"); }
+  const showSetup = !!setup && setupHidden !== key;
+  setShown(sb, showSetup);
+  setCls(sb, "warn", key === "ffmpeg" || key === "ffprobe");
+  if (showSetup) {
+    const t = sb.querySelector(".txt");
+    if (t.innerHTML !== setup) t.innerHTML = setup;
+    sb.dataset.key = key;
+  }
+
+  const q = s.items.filter(i => i.status !== "deferred")
+                   .sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || (a.added - b.added));
+  const d = s.items.filter(i => i.status === "deferred").sort((a, b) => a.added - b.added);
+  setText($("#tabQueue"), t("Очередь") + " · " + q.length);
+  setText($("#tabDeferred"), t("Отложено") + " · " + d.length);
+  setText($("#tabHistory"), t("История") + " · " + s.history.length);
+  document.querySelectorAll("[data-tab]").forEach(el => setCls(el, "on", el.dataset.tab === TAB));
+
+  if (TAB === "queue") {
+    const list = $("#list");
+    syncBulk(q);
+    if (!q.length) {
+      renderRows([], list);
+      syncDropzone(true);
+    } else {
+      syncDropzone(false);
+      renderRows(queueRows(q.sort((a, b) => a.added - b.added)), list);
+    }
+    syncClearButton(false);
+  } else if (TAB === "deferred") {
+    syncBulk(null); syncDropzone(false);
+    renderList(d, "d", updateDeferredCard,
+      `${t("Нет отложенных загрузок")}<br><span style="font-size:12px">${t("выберите «Только по Wi-Fi» при добавлении")}</span>`);
+    syncClearButton(false);
+  } else {
+    syncBulk(null); syncDropzone(false);
+    syncSearch(true);
+    const q = (searchText || "").toLowerCase();
+    const hist = q ? s.history.filter(h => (h.title || "").toLowerCase().includes(q)
+                                        || (h.channel || "").toLowerCase().includes(q)) : s.history;
+    renderList(hist, "h", updateHistoryCard,
+      q ? t("Ничего не нашлось по запросу «{q}»", {q: esc(searchText)}) : t("Пока ничего не скачано"));
+    syncClearButton(!q && s.history.length > 0);
+  }
+  if (TAB !== "history") syncSearch(false);
+
+  if (!$("#ddQuality").dataset.init) {
+    ddSet("ddQuality", s.settings.defaultQuality || "1080p");
+    $("#ddQuality").dataset.init = "1";
+  }
+  if (settingsOpen) syncSheet(s);
+  if (s.notice) toast(s.notice);
+}
+
+function switchTab(name) {
+  if (TAB === name) return;
+  TAB = name;
+  Array.from($("#list").children).forEach(n => n.remove());
+  emptyEl = null;
+  if (clearBtn && clearBtn.parentNode) clearBtn.remove();
+  if (LAST) render(LAST);
+}
+
+/* ---------------- действия ---------------- */
+$("#list").addEventListener("click", async e => {
+  const gact = e.target.closest("[data-gact]");
+  if (gact) {
+    const map = {pause: "/api/pauseAll", resume: "/api/resumeAll",
+                 retry: "/api/retryFailed", cancel: "/api/cancelAll"};
+    api(map[gact.dataset.gact], {group: gact.dataset.gid});
+    e.stopPropagation();
+    return;
+  }
+  const head = e.target.closest(".ghead");
+  if (head) {
+    const key = [...heads.entries()].find(([, h]) => h.root === head);
+    if (key) {
+      const gid = key[0].slice(2);
+      if (collapsed.has(gid)) collapsed.delete(gid); else collapsed.add(gid);
+      if (LAST) render(LAST);
+    }
+    return;
+  }
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if (act === "pause") api("/api/pause", {id});
+  else if (act === "resume") api("/api/resume", {id});
+  else if (act === "cancel") api("/api/cancel", {id});
+  else if (act === "deferWifi") api("/api/defer", {id, mode: "manual"});
+  else if (act === "reveal") api("/api/reveal", {path: b.dataset.path});
+  else if (act === "clearHistory") api("/api/clearHistory", {});
+  else if (act === "again") { $("#input").value = b.dataset.url; switchTab("queue"); addLinks(); }
+});
+
+function addLinks() {
+  const text = $("#input").value.trim();
+  if (!text) return;
+  if (!/https?:\/\/\S+/.test(text)) {
+    toast(t("Не нашёл ссылок — вставьте полный адрес со https://"));
+    return;
+  }
+  const mode = DD.ddStart.value;
+  api("/api/add", {
+    text, quality: DD.ddQuality.value, audioOnly,
+    deferMode: mode, deferTime: mode === "time" ? $("#deferTime").value : "",
+    sectionFrom: $("#cutFrom").value.trim(), sectionTo: $("#cutTo").value.trim()
+  });
+  $("#input").value = "";
+  $("#clipHost").innerHTML = "";
+  switchTab(mode ? "deferred" : "queue");
+}
+
+$("#addBtn").onclick = addLinks;
+$("#cutBtn").onclick = () => {
+  const r = $("#cutRow");
+  const on = r.style.display === "none";
+  r.style.display = on ? "" : "none";
+  setCls($("#cutBtn"), "solid", on);
+  if (on) $("#cutFrom").focus(); else { $("#cutFrom").value = ""; $("#cutTo").value = ""; }
+};
+
+/* Ссылка из буфера обмена: приложение замечает её при возврате в окно
+   и предлагает добавить — копипаст сводится к одному нажатию. */
+/* Уже качали этот ролик — спрашиваем, а не качаем молча второй раз. */
+window.askDuplicate = function (payload) {
+  const host = $("#clipHost");
+  const d = (payload.duplicates || [])[0] || {};
+  const more = (payload.duplicates || []).length - 1;
+  host.innerHTML = `<div class="dupe">
+    <b>${t("Уже скачано")}${d.date ? " " + esc(d.date) : ""}:</b>
+    <span class="u">${esc(d.title || d.url || "")}${more > 0 ? " " + t("и ещё {n}", {n: more}) : ""}</span>
+    <button class="btn solid" data-dup="again">${t("Скачать снова")}</button>
+    <button class="btn" data-dup="show">${t("Показать файл")}</button>
+    <button class="btn" data-dup="no">${t("Не надо")}</button></div>`;
+  host.onclick = e => {
+    const b = e.target.closest("[data-dup]");
+    if (!b) return;
+    if (b.dataset.dup === "again") { const p = Object.assign({}, payload, {force: true}); api("/api/add", p); }
+    else if (b.dataset.dup === "show") { api("/api/reveal", {path: d.path || ""}); return; }
+    host.innerHTML = "";
+  };
+};
+
+window.suggestLink = function (url) {
+  const host = $("#clipHost");
+  host.innerHTML = `<div class="clip"><b>${t("Ссылка в буфере:")}</b>
+    <span class="u">${esc(url)}</span>
+    <button class="btn primary" data-clip="add">${t("Добавить")}</button>
+    <button class="btn" data-clip="no">${t("Не надо")}</button></div>`;
+  host.onclick = e => {
+    const b = e.target.closest("[data-clip]");
+    if (!b) return;
+    if (b.dataset.clip === "add") { $("#input").value = url; addLinks(); }
+    else api("/api/dismissClip", {url});
+    host.innerHTML = "";
+  };
+};
+$("#modeVideo").onclick = () => setMode(false);
+$("#modeAudio").onclick = () => setMode(true);
+function setMode(on) {
+  audioOnly = on;
+  setCls($("#modeVideo"), "on", !on);
+  setCls($("#modeAudio"), "on", on);
+}
+$("#input").addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); addLinks(); }
+});
+document.querySelectorAll("[data-tab]").forEach(t => t.onclick = () => switchTab(t.dataset.tab));
+$("#themeLight").onclick = () => saveSettings({theme: "light"});
+$("#themeDark").onclick = () => saveSettings({theme: "dark"});
+$("#setupClose").onclick = () => { setupHidden = $("#setupbar").dataset.key || ""; if (LAST) render(LAST); };
+
+ddInit("ddQuality", QUALITY, "1080p");
+ddInit("ddStart", START, "", v => { $("#deferTime").style.display = v === "time" ? "" : "none"; });
+
+/* перетаскивание ссылок в окно */
+let dropEl = null;
+window.addEventListener("dragover", e => {
+  e.preventDefault();
+  if (dropzoneEl && dropzoneEl.parentNode) dropzoneEl.classList.add("hot");
+  if (!dropEl) { dropEl = document.createElement("div"); dropEl.className = "drop";
+                 dropEl.textContent = t("Отпустите — добавлю в очередь");
+                 document.querySelector(".shell").appendChild(dropEl); }
+});
+window.addEventListener("dragleave", e => { if (e.relatedTarget === null && dropEl) { dropEl.remove(); dropEl = null; } });
+window.addEventListener("drop", e => {
+  e.preventDefault();
+  if (dropEl) { dropEl.remove(); dropEl = null; }
+  if (dropzoneEl) dropzoneEl.classList.remove("hot");
+  const txt = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
+  if (txt) { $("#input").value = txt; addLinks(); }
+});
+
+/* ---------------- настройки ---------------- */
+function saveSettings(patch) { api("/api/settings", patch); }
+
+let logOpen = false;
+
+function sheetHtml(s) {
+  const st = s.settings;
+  const sw = (id, on, title, note) =>
+    `<div class="grow"><div style="flex:1;min-width:0"><div class="t">${esc(t(title))}</div>
+      <div class="s">${esc(t(note))}</div></div>
+      <button class="switch${on ? " on" : ""}" data-sw="${id}"><span class="knob"></span></button></div>`;
+  const dots = ["#007AFF", "#30D158", "#FF9F0A", "#AF52DE", "#FF375F"].map(c =>
+    `<button class="accdot" data-acc="${c}" style="background:linear-gradient(180deg,${mix(c, "white", .22)},${c});`
+    + `border-color:${st.accent === c ? "var(--text)" : "transparent"}"></button>`).join("");
+  const field = (id, label) =>
+    `<div class="group pad" id="${id}" style="flex:1;position:relative">
+       <div class="glabel">${esc(t(label))}</div>
+       <button class="fieldbtn"><span class="val"></span>${CHEV}</button></div>`;
+  const sect = title => `<div class="sect">${esc(t(title))}</div>`;
+  // длинные пути раньше ломались посреди слова («Resou|rces») — переносим
+  // только после «/», как это делает сам Finder
+  const env = (k, v) => `<div><span class="k">${esc(t(k))}</span><span class="v">${esc(v).replace(/\//g, "/<wbr>")}</span></div>`;
+
+  return `<div class="scrim" data-s="close"></div>
+  <div class="sheet">
+    <div class="sheeth">${esc(t("Настройки"))}<div class="spacer"></div>
+      <span class="ver">${s.env.ytdlpVersion ? "yt-dlp " + esc(s.env.ytdlpVersion) : ""}</span></div>
+    <div class="sheetb">
+
+      ${sect("Загрузка")}
+      <div class="group pad">
+        <div class="glabel">${esc(t("Папка сохранения"))}</div>
+        <div class="row" style="flex-wrap:nowrap">
+          <div class="pathbox">${esc(st.folder)}</div>
+          <button class="btn" data-s="choose">${esc(t("Обзор…"))}</button>
+        </div>
+      </div>
+      <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:stretch">
+        ${field("ddDefQ", "Качество")}
+        ${field("ddConc", "Одновременно")}
+      </div>
+      <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:stretch">
+        ${field("ddSpeed", "Лимит скорости")}
+        ${field("ddOrganize", "Раскладка по папкам")}
+      </div>
+      ${field("ddCodec", "Кодек видео")}
+      ${field("ddCookie", "Cookies из браузера — нужны для приватных и возрастных видео")}
+      <div class="group pad">
+        <div class="glabel">${esc(t("Шаблон имени файла"))}</div>
+        <input type="text" id="setTemplate" value="${esc(st.filenameTemplate)}" style="width:100%">
+      </div>
+
+      ${sect("Что качать вместе с видео")}
+      ${field("ddSubs", "Субтитры")}
+      <div class="group">
+        ${sw("subsEmbed", st.subsEmbed, "Вшивать субтитры в файл", "Иначе рядом ляжет отдельный .srt")}
+        <div class="divider"></div>
+        ${sw("chapters", st.chapters, "Главы", "Разделы ролика видны в плеере")}
+        <div class="divider"></div>
+        ${sw("sponsorblock", st.sponsorblock, "Вырезать спонсорские вставки", "По базе SponsorBlock")}
+      </div>
+
+      ${sect("Поведение")}
+      <div class="group">
+        ${sw("wifiOnly", st.wifiOnly, "Только по Wi-Fi", "На мобильной сети уходит в «Отложено»")}
+        <div class="divider"></div>
+        ${sw("autoResume", st.autoResume, "Продолжать после перезапуска", "Иначе очередь ждёт нажатия")}
+        <div class="divider"></div>
+        ${sw("clipboardWatch", st.clipboardWatch, "Предлагать ссылку из буфера", "При возврате в окно")}
+        <div class="divider"></div>
+        ${sw("autoUpdate", st.autoUpdate, "Обновлять yt-dlp сам", "Раз в неделю и сразу после отказа YouTube")}
+        <div class="divider"></div>
+        ${sw("notify", st.notify, "Уведомлять о завершении", "Системное уведомление и звук")}
+      </div>
+
+      ${sect("Оформление")}
+      ${field("ddLang", "Язык")}
+      ${field("ddDensity", "Плотность списка")}
+      <div class="group">
+        ${sw("dockBadge", st.dockBadge, "Прогресс на значке в Dock", "Процент и счётчик, пока окно свёрнуто")}
+        <div class="divider"></div>
+        ${sw("menuBar", st.menuBar, "Значок в строке меню", "Очередь и прогресс без открытия окна")}
+      </div>
+      <div class="group pad">
+        <div class="glabel">${esc(t("Акцентный цвет — им же красится значок в Dock"))}</div>
+        <div class="row" id="accRow">${dots}</div>
+      </div>
+
+      ${sect("Диагностика")}
+      <div class="group pad">
+        <div class="glabel">${esc(t("Что нашлось на этой машине"))}</div>
+        <div class="envlist">
+          ${env("yt-dlp", s.env.ytdlpPath || t("не найден"))}
+          ${env("ffmpeg", s.env.ffmpegPath || t("не найден"))}
+          ${env("ffprobe", s.env.ffprobePath || t("не найден — сломаются главы, фрагменты и SponsorBlock"))}
+          ${env("JS-движок", s.env.js ? s.env.jsKind + " · " + s.env.jsPath
+                                      : t("не найден — YouTube будет отдавать 403"))}
+          ${env("окно", s.env.window || "—")}
+        </div>
+      </div>
+      <div id="logWrap" style="display:${logOpen ? "" : "none"};flex-direction:column;gap:8px">
+        <div class="logbox" id="logBox">${esc(t("загружаю журнал…"))}</div>
+        <div class="row"><button class="btn" data-s="openlog">${esc(t("Открыть файл в Finder"))}</button></div>
+      </div>
+    </div>
+
+    <div class="sheetf">
+      <button class="btn" data-s="update">${esc(t("Обновить yt-dlp"))}</button>
+      <button class="btn${logOpen ? " solid" : ""}" data-s="log" id="logBtn">${esc(t("Журнал"))}</button>
+      <div class="spacer"></div>
+      <button class="btn primary" data-s="close">${esc(t("Готово"))}</button>
+    </div>
+  </div>`;
+}
+
+/* Журнал приходит отдельным вызовом из приложения — в состоянии его нет,
+   чтобы не таскать килобайты текста каждые 0.4 с. */
+window.showLog = function (text) {
+  const box = document.querySelector("#logBox");
+  if (box) box.textContent = text;
+};
+
+function openSettings() {
+  if (settingsOpen || !LAST) return;
+  settingsOpen = true;
+  const host = document.createElement("div");
+  host.id = "sheetHost";
+  host.innerHTML = sheetHtml(LAST);
+  document.querySelector(".shell").appendChild(host);
+  wireSheet();
+  setCls($("#gear"), "on", true);
+  if (logOpen) api("/api/readLog", {});
+}
+
+function wireSheet() {
+  const st = LAST.settings;
+  ddInit("ddDefQ", QUALITY, st.defaultQuality || "1080p", v => saveSettings({defaultQuality: v}));
+  ddInit("ddConc", CONC, String(st.maxParallel || 2), v => saveSettings({maxParallel: +v}));
+  ddInit("ddCookie", COOKIES, st.cookieBrowser || "chrome", v => saveSettings({cookieBrowser: v}));
+  ddInit("ddSubs", SUBS, st.subtitles || "none", v => saveSettings({subtitles: v}));
+  ddInit("ddSpeed", SPEED, st.speedLimit || "", v => saveSettings({speedLimit: v}));
+  ddInit("ddOrganize", ORGANIZE, st.organize || "none", v => saveSettings({organize: v}));
+  ddInit("ddCodec", CODEC, st.codec || "any", v => saveSettings({codec: v}));
+  ddInit("ddLang", LANGS, st.language || "auto", v => {
+    saveSettings({language: v});
+    LAST.settings.language = v;
+    if (applyLang(LAST)) {
+      render(LAST);
+      // смена языка — редкое осознанное действие, панель можно пересобрать
+      const scroll = ($("#sheetHost .sheetb") || {}).scrollTop || 0;
+      closeSettings();
+      setTimeout(() => {
+        openSettings();
+        const b = $("#sheetHost .sheetb");
+        if (b) b.scrollTop = scroll;
+      }, 30);
+    }
+  });
+  ddInit("ddDensity", DENSITY, st.density || (st.compact ? "compact" : "normal"), v => {
+    saveSettings({density: v});
+    LAST.settings.density = v;
+    setCls(document.body, "compact", v === "compact");
+    setCls(document.body, "list", v === "list");
+  });
+
+  const tpl = $("#setTemplate");
+  if (tpl) tpl.addEventListener("change", () => saveSettings({
+    filenameTemplate: tpl.value.trim() || "%(title)s [%(id)s].%(ext)s"
+  }));
+
+  $("#sheetHost").addEventListener("click", e => {
+    e.stopPropagation();
+
+    // Переключатель меняем прямо на месте: панель не пересобирается,
+    // прокрутка остаётся там, где была.
+    const swBtn = e.target.closest("[data-sw]");
+    if (swBtn) {
+      const key = swBtn.dataset.sw;
+      const val = !swBtn.classList.contains("on");
+      swBtn.classList.toggle("on", val);
+      LAST.settings[key] = val;
+      saveSettings({[key]: val});
+      // строку меню и плотность приложение подхватит из состояния само
+      return;
+    }
+
+    const dot = e.target.closest("[data-acc]");
+    if (dot) {
+      const c = dot.dataset.acc;
+      LAST.settings.accent = c;
+      applyAccent(c);
+      document.querySelectorAll("[data-acc]").forEach(b =>
+        b.style.borderColor = b.dataset.acc === c ? "var(--text)" : "transparent");
+      saveSettings({accent: c});
+      return;
+    }
+
+    const b = e.target.closest("[data-s]");
+    if (!b) return;
+    const k = b.dataset.s;
+    if (k === "close") closeSettings();
+    else if (k === "choose") api("/api/chooseFolder", {});
+    else if (k === "update") { api("/api/updateYtdlp", {}); toast(t("Запустил обновление yt-dlp…")); }
+    else if (k === "openlog") api("/api/openLog", {});
+    else if (k === "log") {
+      logOpen = !logOpen;
+      const wrap = $("#logWrap");
+      if (wrap) wrap.style.display = logOpen ? "" : "none";
+      setCls($("#logBtn"), "solid", logOpen);
+      if (logOpen) {
+        api("/api/readLog", {});
+        setTimeout(() => { const w = $("#logWrap"); if (w && w.scrollIntoView) w.scrollIntoView({block: "nearest"}); }, 30);
+      }
+    }
+  });
+}
+
+const SHEET_DD = ["ddDefQ", "ddConc", "ddCookie", "ddSubs", "ddSpeed", "ddOrganize",
+                  "ddCodec", "ddDensity", "ddLang"];
+
+function closeSettings() {
+  const t = $("#setTemplate");
+  if (t) saveSettings({filenameTemplate: t.value.trim() || "%(title)s [%(id)s].%(ext)s"});
+  settingsOpen = false;
+  openMenu = null;
+  const h = $("#sheetHost");
+  if (h) h.remove();
+  SHEET_DD.forEach(id => delete DD[id]);
+  setCls($("#gear"), "on", false);
+}
+/* панель настроек не перерисовываем на каждом обновлении состояния,
+   иначе выпадающие меню будут закрываться сами */
+function syncSheet(s) {
+  const p = $("#sheetHost .pathbox");
+  if (p) setText(p, s.settings.folder);
+  const v = $("#sheetHost .ver");
+  if (v) setText(v, s.env.ytdlpVersion ? "yt-dlp " + s.env.ytdlpVersion : "");
+  // переключатели подтягиваем из состояния — но не трогаем прокрутку
+  document.querySelectorAll("#sheetHost [data-sw]").forEach(b => {
+    const on = !!s.settings[b.dataset.sw];
+    if (b.classList.contains("on") !== on) b.classList.toggle("on", on);
+  });
+}
+
+$("#gear").onclick = e => { e.stopPropagation(); settingsOpen ? closeSettings() : openSettings(); };
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { if (openMenu) { openMenu = null; renderMenus(); } else if (settingsOpen) closeSettings(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === ",") { e.preventDefault(); settingsOpen ? closeSettings() : openSettings(); }
+});
+
+/* ---------------- мастер первого запуска ---------------- */
+let onbStep = 1;
+let onbChecking = false;   // идёт проверка прямо сейчас (кнопка «Проверить»)
+let onbChecked = false;    // хотя бы одна проверка уже прошла — можно судить о результате
+
+// метки не переводим заранее — язык может смениться уже после того,
+// как этот файл разберётся, переводим прямо при отрисовке
+const ONB_ITEMS = [
+  ["yt-dlp", e => e.ytdlp, "yt-dlp"],
+  ["ffmpeg", e => e.ffmpeg, "ffmpeg"],
+  ["ffprobe", e => e.ffprobe, "ffprobe"],
+  ["JS-движок", e => e.js, "deno"],
+];
+
+function onboardHtml(s) {
+  const st = s.settings, env = s.env;
+  const installing = env.installing || "";
+
+  const rows = ONB_ITEMS.map(([label, has, key]) => {
+    const ok = has(env);
+    const busy = installing === key || (onbChecking && !onbChecked);
+    const cls = busy ? "busy" : (onbChecked ? (ok ? "ok" : "bad") : "");
+    const stText = installing === key ? t("Устанавливаю…")
+                 : onbChecking && !onbChecked ? t("Проверяем…")
+                 : !onbChecked ? "—"
+                 : ok ? t("Готово") : t("Не найден");
+    const installBtn = (onbChecked && !ok && installing !== key)
+      ? `<button class="btn" data-onb-install="${key}">${esc(t("Установить"))}</button>` : "";
+    return `<div class="onbRow"><span class="onbState ${cls}"></span>
+             <span class="nm">${esc(t(label))}</span><span class="st">${esc(stText)}</span>${installBtn}</div>`;
+  }).join("");
+
+  const glyph = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff"
+    stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/>
+    <path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>`;
+
+  let body;
+  if (onbStep === 1) {
+    body = `<div class="onbTitle">${esc(t("Добро пожаловать в YTLoader"))}</div>
+      <div class="onbText">${esc(t("Скачивает видео и плейлисты с YouTube через yt-dlp — без браузера и терминала. Проверим, что всё на месте, и можно начинать."))}</div>`;
+  } else if (onbStep === 2) {
+    body = `<div class="onbTitle">${esc(t("Проверка компонентов"))}</div>
+      <div class="onbText">${esc(t("Приложению нужны эти программы — обычно они уже внутри."))}</div>
+      <div class="onbList">${rows}</div>
+      <div class="row" style="justify-content:center">
+        <button class="btn solid" data-onb="check">${esc(t("Проверить"))}</button>
+      </div>
+      <div class="group pad">
+        <div class="glabel">${esc(t("Папка для загрузок"))}</div>
+        <div class="row" style="flex-wrap:nowrap">
+          <div class="pathbox">${esc(st.folder)}</div>
+          <button class="btn" data-onb="choose">${esc(t("Изменить"))}</button>
+        </div>
+      </div>`;
+  } else {
+    body = `<div class="onbTitle">${esc(t("Всё готово"))}</div>
+      <div class="onbText">${esc(t("Вставляйте ссылки — можно сразу несколько, плейлисты разворачиваются сами."))}</div>`;
+  }
+
+  const dots = [1, 2, 3].map(n => `<span class="onbDot${n === onbStep ? " on" : ""}"></span>`).join("");
+  const primary = onbStep === 1 ? t("Начать") : onbStep === 2 ? t("Далее") : t("Поехали!");
+  const skip = onbStep < 3
+    ? `<button class="onbSkip" data-onb="skip">${esc(t("Пропустить"))}</button>` : "<span></span>";
+
+  return `<div class="onbScrim"><div class="onbCard">
+    <div class="onbIcon">${glyph}</div>
+    ${body}
+    <div class="onbDots">${dots}</div>
+    <div class="onbFoot">${skip}<div class="spacer"></div>
+      <button class="btn primary" data-onb="next">${esc(primary)}</button></div>
+  </div></div>`;
+}
+
+function openOnboarding() {
+  if ($("#onbHost") || !LAST) return;
+  onbStep = 1; onbChecking = false; onbChecked = false;
+  const host = document.createElement("div");
+  host.id = "onbHost";
+  host.innerHTML = onboardHtml(LAST);
+  document.querySelector(".shell").appendChild(host);
+  wireOnboarding();
+}
+
+// Полная пересборка карточки — только когда меняется сам шаг мастера.
+// Это редкое осознанное действие (клик по «Далее»), можно пересобрать целиком.
+function rebuildOnboarding() {
+  const host = $("#onbHost");
+  if (!host || !LAST) return;
+  host.innerHTML = onboardHtml(LAST);
+  wireOnboarding();
+}
+
+/* Каждый пуш состояния (~2.5 раза в секунду) раньше пересобирал всю карточку
+   целиком через innerHTML — вместе с ней каждый раз заново запускалась
+   CSS-анимация появления (.onbCard{animation:pop}), и карточка на глазах
+   мигала/дёргалась, пока мастер был открыт. Теперь между пересборками
+   состояние подтягивается точечно, без замены DOM-узлов карточки. */
+function syncOnboarding(s) {
+  const host = $("#onbHost");
+  if (!host) return;
+  const p = host.querySelector(".pathbox");
+  if (p) setText(p, s.settings.folder);
+  if (onbStep !== 2) return;
+
+  const rows = host.querySelectorAll(".onbList .onbRow");
+  ONB_ITEMS.forEach(([label, has, key], i) => {
+    const row = rows[i];
+    if (!row) return;
+    const ok = has(s.env);
+    const installing = s.env.installing || "";
+    const busy = installing === key || (onbChecking && !onbChecked);
+    const cls = "onbState " + (busy ? "busy" : onbChecked ? (ok ? "ok" : "bad") : "");
+    const stText = installing === key ? t("Устанавливаю…")
+                 : onbChecking && !onbChecked ? t("Проверяем…")
+                 : !onbChecked ? "—"
+                 : ok ? t("Готово") : t("Не найден");
+
+    const dot = row.querySelector(".onbState");
+    if (dot && dot.className !== cls) dot.className = cls;
+    const stEl = row.querySelector(".st");
+    if (stEl) setText(stEl, stText);
+
+    const shouldHaveBtn = onbChecked && !ok && installing !== key;
+    const existingBtn = row.querySelector("[data-onb-install]");
+    if (shouldHaveBtn && !existingBtn) {
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.dataset.onbInstall = key;
+      btn.textContent = t("Установить");
+      row.appendChild(btn);
+    } else if (!shouldHaveBtn && existingBtn) {
+      existingBtn.remove();
+    }
+  });
+}
+
+function wireOnboarding() {
+  const host = $("#onbHost");
+  if (!host) return;
+  host.onclick = e => {
+    const inst = e.target.closest("[data-onb-install]");
+    if (inst) { api("/api/installComponent", {name: inst.dataset.onbInstall}); return; }
+
+    const b = e.target.closest("[data-onb]");
+    if (!b) return;
+    const k = b.dataset.onb;
+    if (k === "choose") { api("/api/chooseFolder", {}); return; }
+    if (k === "skip") { finishOnboarding(); return; }
+    if (k === "check") {
+      onbChecking = true; onbChecked = false;
+      if (LAST) syncOnboarding(LAST);
+      api("/api/recheckComponents", {});
+      setTimeout(() => { onbChecking = false; onbChecked = true; if (LAST) syncOnboarding(LAST); }, 700);
+      return;
+    }
+    if (k === "next") {
+      if (onbStep < 3) { onbStep += 1; rebuildOnboarding(); }
+      else finishOnboarding();
+    }
+  };
+}
+
+function finishOnboarding() {
+  const host = $("#onbHost");
+  if (host) host.remove();
+  if (LAST) LAST.settings.onboarded = true;
+  saveSettings({onboarded: true});
+}
+
+/* Разметка в HTML написана по-русски: при смене языка проходим по ней один раз. */
+function localizeStatic() {
+  const set = (sel, txt) => { const el = $(sel); if (el && el.textContent !== txt) el.textContent = txt; };
+  const attr = (sel, a, txt) => { const el = $(sel); if (el) el.setAttribute(a, txt); };
+  attr("#input", "placeholder", t("Вставьте ссылки YouTube — по одной в строке, можно плейлист"));
+  set("#modeVideo", t("Видео"));
+  const add = $("#addBtn");
+  if (add) {
+    const node = [...add.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+    if (node) node.textContent = t("Добавить");
+  }
+  set("#cutBtn", t("Фрагмент"));
+  attr("#cutBtn", "title", t("Скачать только кусок ролика"));
+  attr("#cutFrom", "placeholder", t("от 00:05:00"));
+  attr("#cutTo", "placeholder", t("до 00:12:00"));
+  const cut = $("#cutRow");
+  if (cut) {
+    const labels = cut.querySelectorAll(".glabel");
+    if (labels[0]) labels[0].textContent = t("Фрагмент ролика:");
+    if (labels[1]) labels[1].textContent = t("пусто — от начала и до конца");
+  }
+  attr("#themeLight", "title", t("Светлая тема"));
+  attr("#themeDark", "title", t("Тёмная тема"));
+  attr("#gear", "title", t("Настройки (⌘,)"));
+}
+
+/* Язык: либо выбранный вручную, либо системный — что передало приложение. */
+const SUPPORTED = ["ru", "en", "de", "fr", "es"];
+function resolveLang(s) {
+  const want = (!s.settings.language || s.settings.language === "auto")
+    ? (s.env.systemLang || "ru") : s.settings.language;
+  return SUPPORTED.includes(want) ? want : "en";
+}
+function applyLang(s) {
+  const lang = resolveLang(s);
+  if (lang === LANG) return false;
+  LANG = lang;
+  document.documentElement.lang = lang;
+  localizeStatic();
+  // подписи выпадающих списков считаются в момент выбора — обновляем
+  Object.keys(DD).forEach(id => { if (DD[id].host && DD[id].host.isConnected) ddSet(id, DD[id].value); });
+  return true;
+}
+
+function poll() { if (LAST) render(LAST); }
+setMode(false);
+$("#input").focus();
+</script>
+</body>
+</html>
