@@ -29,6 +29,38 @@ jobs:
       - name: Собрать DMG только для Intel
         run: ./scripts/build-dmg.sh --arch x86_64
 
+      - name: Запустить собранное приложение (самопроверка)
+        run: |
+          # Настоящее окно: вставляет ссылку, качает файл с локального сервера настоящим yt-dlp из .app,
+          # открывает настройки. Если приложение сломано, релиз не публикуется.
+          export YTLOADER_SELFTEST=1
+          export YTLOADER_HOME="$RUNNER_TEMP/ytl-home"
+          export YTLOADER_SELFTEST_OUT="$RUNNER_TEMP/selftest"
+          export YTLOADER_SELFTEST_URL=http://127.0.0.1:8765/sample.mp4
+          mkdir -p "$YTLOADER_HOME" "$YTLOADER_SELFTEST_OUT"
+          echo '{"onboarded":true,"autoUpdate":false,"language":"ru","cookieBrowser":"none"}' > "$YTLOADER_HOME/settings.json"
+          (cd host/Tests/YTLoaderCoreTests/Fixtures && nohup python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          sleep 1
+          ok=0
+          for attempt in 1 2; do
+            build/universal/YTLoader.app/Contents/MacOS/YTLoader > selftest.log 2>&1 &
+            PID=$!
+            for i in $(seq 1 170); do kill -0 $PID 2>/dev/null || break; sleep 1; done
+            kill $PID 2>/dev/null || true
+            cat selftest.log
+            if grep -q "SELFTEST OK" selftest.log; then ok=1; break; fi
+            rm -rf "$YTLOADER_HOME/history.json" "$YTLOADER_HOME/queue.json"
+          done
+          [ "$ok" = 1 ]
+
+      - name: Приложить снимки окна
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selftest-shots
+          path: ${{ runner.temp }}/selftest/*.png
+          if-no-files-found: ignore
+
       - name: Проверить образы
         run: |
           ls -la dist
