@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 /// Короткий идентификатор для загрузки.
 public func shortID() -> String {
@@ -74,10 +75,22 @@ final class RunningProcess {
             group.enter()
             DispatchQueue.global(qos: .utility).async {
                 let reader = LineReader()
-                let handle = pipe.fileHandleForReading
+                // Важно: читаем «сколько есть» системным read(). FileHandle.read(upToCount:) на pipe ждёт,
+                // пока накопится весь запрошенный объём (или конец потока), и строки прогресса приходили
+                // одним куском в самом конце загрузки — полоса стояла на нуле.
+                let fd = pipe.fileHandleForReading.fileDescriptor
+                var buffer = [UInt8](repeating: 0, count: 16384)
                 while true {
-                    guard let chunk = try? handle.read(upToCount: 65536), !chunk.isEmpty else { break }
-                    reader.feed(chunk, callback)
+                    let n = buffer.withUnsafeMutableBytes { Darwin.read(fd, $0.baseAddress, $0.count) }
+                    if n > 0 {
+                        reader.feed(Data(buffer[0..<n]), callback)
+                    } else if n == 0 {
+                        break
+                    } else if errno == EINTR {
+                        continue
+                    } else {
+                        break
+                    }
                 }
                 reader.flush(callback)
                 group.leave()
