@@ -1,7 +1,7 @@
 Collecting yt-dlp
   Downloading yt_dlp-2026.8.19-py3-none-any.whl.metadata (183 kB)
 Downloading yt_dlp-2026.8.19-py3-none-any.whl (3.2 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 65.8 MB/s  0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 101.1 MB/s  0:00:00
 Installing collected packages: yt-dlp
 Successfully installed yt-dlp-2026.8.19
 2026.08.19
@@ -23,28 +23,28 @@ x264
 x265
 [32m==>[0m [1mFetching downloads for: [32mffmpeg[39m[0m
 ✔︎ Bottle Manifest dav1d (1.5.4)
-✔︎ Bottle Manifest mpg123 (1.33.7)
-✔︎ Bottle Manifest lame (4.0)
 ✔︎ Bottle dav1d (1.5.4)
-✔︎ Bottle Manifest libvmaf (3.2.0)
+✔︎ Bottle Manifest mpg123 (1.33.7)
 ✔︎ Bottle mpg123 (1.33.7)
+✔︎ Bottle Manifest lame (4.0)
+✔︎ Bottle lame (4.0)
+✔︎ Bottle Manifest libvmaf (3.2.0)
+✔︎ Bottle libvmaf (3.2.0)
 ✔︎ Bottle Manifest libvpx (1.17.0)
 ✔︎ Bottle Manifest opus (1.6.1)
-✔︎ Bottle lame (4.0)
 ✔︎ Bottle libvpx (1.17.0)
-✔︎ Bottle Manifest sdl3 (3.4.14)
 ✔︎ Bottle opus (1.6.1)
 ✔︎ Bottle Manifest sdl2-compat (2.32.70)
-✔︎ Bottle Manifest svt-av1 (4.2.0)
-✔︎ Bottle Manifest x264 (r3222)
-✔︎ Bottle libvmaf (3.2.0)
-✔︎ Bottle Manifest x265 (4.3)
-✔︎ Bottle sdl2-compat (2.32.70)
-✔︎ Bottle svt-av1 (4.2.0)
+✔︎ Bottle Manifest sdl3 (3.4.14)
 ✔︎ Bottle sdl3 (3.4.14)
+✔︎ Bottle Manifest svt-av1 (4.2.0)
+✔︎ Bottle sdl2-compat (2.32.70)
+✔︎ Bottle Manifest x264 (r3222)
+✔︎ Bottle Manifest x265 (4.3)
+✔︎ Bottle svt-av1 (4.2.0)
+✔︎ Bottle ffmpeg (9.0.1_1)
 ✔︎ Bottle x264 (r3222)
 ✔︎ Bottle x265 (4.3)
-✔︎ Bottle ffmpeg (9.0.1_1)
 [32m==>[0m [1mInstalling dependencies for ffmpeg:[0m [32mdav1d[39m, [32mmpg123[39m, [32mlame[39m, [32mlibvmaf[39m, [32mlibvpx[39m, [32mopus[39m, [32msdl3[39m, [32msdl2-compat[39m, [32msvt-av1[39m, [32mx264[39m and [32mx265[39m[0m
 [32m==>[0m [1mInstalling ffmpeg dependency: [32mdav1d[39m[0m
 [34m==>[0m [1mPouring dav1d--1.5.4.arm64_sonoma.bottle.tar.gz[0m
