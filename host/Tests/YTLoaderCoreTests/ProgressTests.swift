@@ -86,4 +86,73 @@ final class ProgressTests: XCTestCase {
         let snap = tr.update(p)
         XCTAssertEqual(snap.pct, 25)
     }
+
+    private func hls(_ downloaded: Int64, estimate: Int64?, frag: Int, of count: Int, status: String = "downloading",
+                     vcodec: String = "avc1.640028") -> ProgressLine {
+        ProgressLine(status: status, downloaded: downloaded, total: nil, estimate: estimate, speed: 1_000_000, eta: nil,
+                     vcodec: vcodec, acodec: "NA", fragIndex: frag, fragCount: count)
+    }
+
+    /// HLS: оценка размера от yt-dlp скачет, а процент должен идти ровно и только вперёд.
+    func testHLSEstimateSwingsDoNotMoveProgressBar() {
+        var tr = ProgressTracker(streams: [StreamInfo(kind: "video", total: 900_000_000),
+                                           StreamInfo(kind: "audio", total: 30_000_000)])
+        // оценка в начале сильно занижена и потом растёт — раньше это давало «сразу 100%»
+        let seq: [(Int64, Int64, Int)] = [(2_000_000, 2_500_000, 1), (6_000_000, 8_000_000, 2),
+                                          (40_000_000, 60_000_000, 10), (300_000_000, 950_000_000, 100),
+                                          (640_000_000, 1_150_000_000, 200), (880_000_000, 880_000_000, 300)]
+        var last = -1
+        for (done, est, frag) in seq {
+            let snap = tr.update(hls(done, estimate: est, frag: frag, of: 300))
+            XCTAssertGreaterThanOrEqual(snap.pct, last, "процент не должен уменьшаться")
+            XCTAssertLessThan(snap.pct, 100)
+            last = snap.pct
+        }
+        // 300 из 300 фрагментов видео — это почти вся полоса, кроме звука
+        XCTAssertGreaterThan(last, 90)
+        XCTAssertLessThan(last, 100)
+        // после первого же фрагмента полоса почти пустая
+        var fresh = ProgressTracker(streams: [StreamInfo(kind: "video", total: 900_000_000)])
+        XCTAssertLessThan(fresh.update(hls(2_000_000, estimate: 2_500_000, frag: 1, of: 300)).pct, 5)
+    }
+
+    /// Повтор фрагмента после ошибки уменьшает счётчик байт — это не новая дорожка.
+    func testDownloadedBytesDroppingDoesNotFinishTheStream() {
+        var tr = ProgressTracker(streams: [StreamInfo(kind: "video", total: 800_000_000),
+                                           StreamInfo(kind: "audio", total: 20_000_000)])
+        _ = tr.update(hls(100_000_000, estimate: 800_000_000, frag: 40, of: 300))
+        let before = tr.update(hls(120_000_000, estimate: 800_000_000, frag: 50, of: 300))
+        let after = tr.update(hls(60_000_000, estimate: 800_000_000, frag: 50, of: 300))
+        XCTAssertEqual(tr.streams.count, 2)
+        XCTAssertEqual(tr.streams[0].kind, "video")
+        XCTAssertEqual(after.stage, "video")
+        XCTAssertGreaterThanOrEqual(after.pct, before.pct)
+        XCTAssertLessThan(after.pct, 30)
+        XCTAssertFalse(tr.streams[0].done == tr.streams[0].total)
+    }
+
+    /// Размер по ссылке (1,15 ГБ) не должен оставаться в полосе, когда yt-dlp уже знает точнее.
+    func testEstimatedSizeFollowsYtdlpOnceItSettles() {
+        var tr = ProgressTracker(streams: [StreamInfo(kind: "video", total: 1_150_000_000)])
+        _ = tr.update(hls(1_000_000, estimate: 3_000_000, frag: 1, of: 300))
+        XCTAssertEqual(tr.streams[0].total, 1_150_000_000, "ранняя оценка yt-dlp не заменяет размер из разбора")
+        let snap = tr.update(hls(300_000_000, estimate: 905_000_000, frag: 100, of: 300))
+        XCTAssertEqual(tr.streams[0].total, 905_000_000)
+        XCTAssertEqual(snap.total, 905_000_000)
+        _ = tr.update(hls(905_000_000, estimate: 905_000_000, frag: 300, of: 300, status: "finished"))
+        XCTAssertEqual(tr.streams[0].total, 905_000_000)
+        XCTAssertFalse(tr.streams[0].estimated)
+    }
+
+    /// Дорожка звука раньше видео (или другой порядок) — полоса всё равно идёт к нужному участку.
+    func testStreamOrderDoesNotMatter() {
+        var tr = ProgressTracker(streams: [StreamInfo(kind: "video", total: 800), StreamInfo(kind: "audio", total: 200)])
+        let audio = ProgressLine(status: "downloading", downloaded: 100, total: 200, estimate: nil, speed: 10, eta: nil,
+                                 vcodec: "none", acodec: "mp4a", fragIndex: nil, fragCount: nil)
+        let snap = tr.update(audio)
+        XCTAssertEqual(snap.stage, "audio")
+        XCTAssertEqual(snap.pct, 10)
+        XCTAssertFalse(tr.streams[0].active)
+        XCTAssertEqual(tr.streams[0].done, 0)
+    }
 }

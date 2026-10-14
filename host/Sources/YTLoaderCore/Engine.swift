@@ -41,6 +41,7 @@ final class Job {
     var printFile = ""
     var finalPath = ""
     var destinations: [String] = []
+    var tempDir = ""
     var finishing = false
 
     init(kind: Kind, tracker: ProgressTracker = ProgressTracker()) {

@@ -101,17 +101,27 @@ public enum ProgressParser {
 
 /// Складывает построчный прогресс в общую картину: сколько всего, сколько
 /// скачано, какая дорожка идёт сейчас.
+///
+/// Главное правило: полоса идёт только вперёд. Оценка размера у HLS/DASH скачет
+/// (yt-dlp прикидывает её по первым фрагментам), счётчик байт при повторе фрагмента
+/// может уменьшиться — на проценты это влиять не должно. Доля дорожки берётся
+/// из номера фрагмента, когда он известен, иначе из байтов; вес дорожки в общей
+/// полосе — её размер из разбора ссылки, он не меняется по ходу загрузки.
 public struct ProgressTracker {
     public var streams: [StreamInfo]
+    var fractions: [Double]
+    var weights: [Double]
+    var finished: [Bool]
     var idx = 0
-    var lastDownloaded: Int64 = 0
-    var predicted: Bool
+    var lastPct = 0
     /// В режиме «только звук» любая дорожка считается звуковой.
     public var forcedKind: String?
 
     public init(streams: [StreamInfo] = []) {
         self.streams = streams
-        self.predicted = !streams.isEmpty
+        fractions = Array(repeating: 0, count: streams.count)
+        weights = streams.map { Double(max($0.total, 0)) }
+        finished = Array(repeating: false, count: streams.count)
     }
 
     public struct Snapshot: Equatable {
@@ -123,46 +133,66 @@ public struct ProgressTracker {
         public var stage: String
     }
 
+    private mutating func addStream(_ kind: String) {
+        streams.append(StreamInfo(kind: kind))
+        fractions.append(0)
+        weights.append(0)
+        finished.append(false)
+    }
+
     public mutating func update(_ p: ProgressLine) -> Snapshot {
         let kind = forcedKind ?? p.kind
-        if streams.isEmpty { streams.append(StreamInfo(kind: kind)) }
+        if streams.isEmpty { addStream(kind) }
 
-        // Если дорожка сменилась или счётчик байт пошёл заново — это уже следующий файл.
-        if p.status == "downloading" {
-            let kindChanged = streams[idx].kind != kind
-            let restarted = lastDownloaded > 0 && p.downloaded + 1_000_000 < lastDownloaded
-            if kindChanged || restarted {
-                if let next = streams.indices.first(where: { $0 > idx && streams[$0].kind == kind }) {
-                    finishCurrent()
-                    idx = next
-                } else if !predicted || restarted || kindChanged {
-                    finishCurrent()
-                    streams.append(StreamInfo(kind: kind))
-                    idx = streams.count - 1
-                }
+        // Дорожку определяет только её тип: следующая ещё не законченная того же типа.
+        // Просадка счётчика байт — не повод считать дорожку новой.
+        if p.status == "downloading", streams[idx].kind != kind || finished[idx] {
+            if let next = streams.indices.first(where: { !finished[$0] && streams[$0].kind == kind }) {
+                idx = next
+            } else {
+                addStream(kind)
+                idx = streams.count - 1
             }
         }
 
         var cur = streams[idx]
         cur.active = p.status == "downloading"
-        if let t = p.knownTotal {
-            cur.total = max(t, p.downloaded)
-            cur.estimated = p.total == nil || (p.total ?? 0) <= 0
-        } else if cur.total < p.downloaded {
-            cur.total = p.downloaded
-        }
-        if cur.total == 0, let fc = p.fragCount, fc > 0, let fi = p.fragIndex, fi > 0 {
-            // размер неизвестен, но фрагменты считаются — оценим по ним позже
-            cur.estimated = true
-        }
-        cur.done = p.downloaded
-        streams[idx] = cur
-        lastDownloaded = p.downloaded
+        var fraction = fractions[idx]
 
-        if p.status == "finished" {
-            finishCurrent()
-            if idx + 1 < streams.count { idx += 1; lastDownloaded = 0 }
+        if let t = p.total, t > 0 {
+            // точный размер
+            cur.total = max(t, p.downloaded)
+            cur.done = max(cur.done, p.downloaded)
+            cur.estimated = false
+            fraction = max(fraction, Double(cur.done) / Double(max(cur.total, 1)))
+        } else if let fc = p.fragCount, fc > 0, let fi = p.fragIndex, fi > 0 {
+            // HLS/DASH: доля — по номеру фрагмента; размер показываем по оценке yt-dlp,
+            // но только когда она устоялась, до этого — по разбору ссылки.
+            let f = min(1, Double(fi) / Double(fc))
+            let stable = fi >= max(5, fc / 20)
+            if stable, let e = p.estimate, e > 0 {
+                cur.total = max(e, p.downloaded)
+            } else if cur.total == 0 {
+                cur.total = max(p.estimate ?? 0, p.downloaded)
+            }
+            cur.estimated = true
+            fraction = max(fraction, f)
+            cur.done = max(cur.done, Int64(fraction * Double(cur.total)))
+        } else if let k = p.knownTotal {
+            cur.total = max(k, p.downloaded)
+            cur.done = max(cur.done, p.downloaded)
+            cur.estimated = true
+            fraction = max(fraction, Double(cur.done) / Double(max(cur.total, 1)))
+        } else {
+            cur.done = max(cur.done, p.downloaded)
+            if cur.total < cur.done { cur.total = cur.done }
+            if cur.total > 0 { fraction = max(fraction, Double(cur.done) / Double(cur.total)) }
         }
+        if cur.total < cur.done { cur.total = cur.done }
+        streams[idx] = cur
+        fractions[idx] = min(1, fraction)
+
+        if p.status == "finished" { finishCurrent() }
         return snapshot(p)
     }
 
@@ -173,6 +203,9 @@ public struct ProgressTracker {
         s.done = s.total
         s.estimated = false
         streams[idx] = s
+        fractions[idx] = 1
+        finished[idx] = true
+        if let next = streams.indices.first(where: { !finished[$0] }) { idx = next }
     }
 
     /// Все дорожки скачаны — полоса заполняется целиком.
@@ -182,24 +215,26 @@ public struct ProgressTracker {
             streams[i].done = max(streams[i].total, streams[i].done)
             streams[i].total = streams[i].done
             streams[i].estimated = false
+            fractions[i] = 1
+            finished[i] = true
         }
+        lastPct = 100
     }
 
-    private func snapshot(_ p: ProgressLine) -> Snapshot {
+    private mutating func snapshot(_ p: ProgressLine) -> Snapshot {
         let done = streams.reduce(Int64(0)) { $0 + $1.done }
-        var total = streams.reduce(Int64(0)) { $0 + max($1.total, $1.done) }
+        let total = streams.reduce(Int64(0)) { $0 + max($1.total, $1.done) }
 
-        // Для HLS/DASH общий размер неизвестен: оцениваем по номеру фрагмента.
-        var pct: Int
-        if total > 0 && done > 0 && (p.knownTotal != nil || streams.count > 1) {
-            pct = Int(min(100, done * 100 / max(total, 1)))
-        } else if let fi = p.fragIndex, let fc = p.fragCount, fc > 0 {
-            pct = min(100, fi * 100 / fc)
-            if total == 0 { total = done }
-        } else {
-            pct = 0
+        var weighted = 0.0, sum = 0.0
+        for i in streams.indices {
+            let w = weights[i] > 0 ? weights[i] : Double(max(streams[i].total, 1))
+            weighted += w * fractions[i]
+            sum += w
         }
+        var pct = sum > 0 ? Int((weighted / sum * 100).rounded()) : 0
         if p.status == "downloading" && pct >= 100 { pct = 99 }
+        pct = max(pct, min(lastPct, 99))
+        lastPct = pct
 
         let speed = p.speed ?? 0
         var eta = p.eta ?? 0

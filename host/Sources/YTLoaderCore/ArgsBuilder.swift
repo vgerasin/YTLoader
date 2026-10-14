@@ -32,10 +32,12 @@ public struct DownloadSpec {
     public var noCookies: Bool
     public var groupTitle: String
     public var printFile: String       // куда yt-dlp запишет итоговый путь
+    public var tempDir: String         // где лежат недокачанные части и обложка (скрытая папка)
+    public var fallback: Int           // 0 — обычные настройки, 1+ — запасные (после отказа 403)
 
     public init(url: String, audioOnly: Bool, quality: String, sectionFrom: String = "",
                 sectionTo: String = "", noCookies: Bool = false, groupTitle: String = "",
-                printFile: String = "") {
+                printFile: String = "", tempDir: String = "", fallback: Int = 0) {
         self.url = url
         self.audioOnly = audioOnly
         self.quality = quality
@@ -44,6 +46,8 @@ public struct DownloadSpec {
         self.noCookies = noCookies
         self.groupTitle = groupTitle
         self.printFile = printFile
+        self.tempDir = tempDir
+        self.fallback = fallback
     }
 }
 
@@ -66,28 +70,44 @@ public enum ArgsBuilder {
 
     /// Селектор формата yt-dlp.
     /// `height<=?` пропускает форматы без указанной высоты (так бывает у HLS на VK и Rutube).
-    public static func formatSelector(quality: String, codec: String, audioOnly: Bool, canMerge: Bool) -> String {
-        if audioOnly { return "bestaudio/best" }
+    ///
+    /// `avoidHLS` (для YouTube): сначала обычные https-форматы, потом всё остальное.
+    /// У HLS-форматов («Premium», f616) размер известен только приблизительно, качаются они
+    /// сотнями фрагментов и чаще получают отказ 403 посреди загрузки.
+    public static func formatSelector(quality: String, codec: String, audioOnly: Bool, canMerge: Bool,
+                                      avoidHLS: Bool = false) -> String {
+        let plain = avoidHLS ? "[protocol!*=m3u8]" : ""
+        if audioOnly {
+            return avoidHLS ? "ba\(plain)/bestaudio/best" : "bestaudio/best"
+        }
         let cap = height(for: quality).map { "[height<=?\($0)]" } ?? ""
         guard canMerge else {
             // без ffmpeg склеить дорожки нельзя — берём готовый файл
-            return "b\(cap)/b"
+            return avoidHLS ? "b\(cap)\(plain)/b\(cap)/b" : "b\(cap)/b"
         }
+        var variants: [String] = []
         switch codec {
         case "h264":
-            return "bv*[vcodec^=avc1]\(cap)+ba[ext=m4a]/bv*[vcodec^=avc1]\(cap)+ba/bv*\(cap)+ba/b\(cap)/b"
+            if avoidHLS { variants.append("bv*[vcodec^=avc1]\(cap)\(plain)+ba[ext=m4a]\(plain)") }
+            variants += ["bv*[vcodec^=avc1]\(cap)+ba[ext=m4a]", "bv*[vcodec^=avc1]\(cap)+ba",
+                         "bv*\(cap)+ba", "b\(cap)", "b"]
         case "av1":
-            return "bv*[vcodec^=av01]\(cap)+ba/bv*\(cap)+ba/b\(cap)/b"
+            if avoidHLS { variants.append("bv*[vcodec^=av01]\(cap)\(plain)+ba\(plain)") }
+            variants += ["bv*[vcodec^=av01]\(cap)+ba", "bv*\(cap)+ba", "b\(cap)", "b"]
         default:
-            return "bv*\(cap)+ba/b\(cap)/b"
+            if avoidHLS { variants.append("bv*\(cap)\(plain)+ba\(plain)") }
+            variants += ["bv*\(cap)+ba", "b\(cap)", "b"]
         }
+        return variants.joined(separator: "/")
     }
 
     /// Общие для разбора ссылки и для загрузки параметры.
-    static func common(_ s: Settings, tools: ToolPaths, noCookies: Bool, url: String) -> [String] {
+    static func common(_ s: Settings, tools: ToolPaths, noCookies: Bool, url: String, fallback: Int = 0) -> [String] {
         var a = ["--ignore-config", "--no-colors", "--socket-timeout", "30"]
         if Sites.isYouTube(url) {
-            a += ["--extractor-args", "youtube:player_client=default,web_embedded"]
+            // запасной набор клиентов — после того, как обычный получил отказ 403
+            let clients = fallback > 0 ? "tv,android_vr,web_safari" : "default,web_embedded"
+            a += ["--extractor-args", "youtube:player_client=\(clients)"]
         }
         if s.cookieBrowser != "none", !s.cookieBrowser.isEmpty, !noCookies {
             a += ["--cookies-from-browser", s.cookieBrowser]
@@ -101,8 +121,8 @@ public enum ArgsBuilder {
 
     /// Разбор ссылки: один JSON с названием, превью и форматами.
     public static func resolveArgs(url: String, settings s: Settings, tools: ToolPaths,
-                                   audioOnly: Bool, quality: String, noCookies: Bool) -> [String] {
-        var a = common(s, tools: tools, noCookies: noCookies, url: url)
+                                   audioOnly: Bool, quality: String, noCookies: Bool, fallback: Int = 0) -> [String] {
+        var a = common(s, tools: tools, noCookies: noCookies, url: url, fallback: fallback)
         a += ["-J", "--flat-playlist", "--no-warnings", "--playlist-end", "\(maxPlaylist)"]
         if !Sites.looksLikeCollection(url) {
             // «watch?v=…&list=…» — это один ролик, а не весь список
@@ -110,7 +130,8 @@ public enum ArgsBuilder {
                 a.append("--no-playlist")
             }
         }
-        a += ["-f", formatSelector(quality: quality, codec: s.codec, audioOnly: audioOnly, canMerge: tools.hasFFmpeg)]
+        a += ["-f", formatSelector(quality: quality, codec: s.codec, audioOnly: audioOnly, canMerge: tools.hasFFmpeg,
+                                   avoidHLS: Sites.isYouTube(url))]
         a.append(url)
         return a
     }
@@ -150,7 +171,7 @@ public enum ArgsBuilder {
 
     public static func downloadArgs(_ spec: DownloadSpec, settings s: Settings, tools: ToolPaths) -> [String] {
         let canMerge = tools.hasFFmpeg
-        var a = common(s, tools: tools, noCookies: spec.noCookies, url: spec.url)
+        var a = common(s, tools: tools, noCookies: spec.noCookies, url: spec.url, fallback: spec.fallback)
         a += [
             "--newline", "--progress", "--progress-delta", "0.5",
             "--progress-template", progressTemplate,
@@ -160,11 +181,16 @@ public enum ArgsBuilder {
             "-P", s.folder,
             "-o", folderPrefix(s, groupTitle: spec.groupTitle) + s.filenameTemplate,
         ]
+        if !spec.tempDir.isEmpty {
+            // части файла, фрагменты и обложка — в скрытую папку; в загрузки попадает только готовый файл
+            a += ["-P", "temp:" + spec.tempDir]
+        }
         if !spec.printFile.isEmpty {
             a += ["--print-to-file", "after_move:%(filepath)s", spec.printFile]
         }
 
-        a += ["-f", formatSelector(quality: spec.quality, codec: s.codec, audioOnly: spec.audioOnly, canMerge: canMerge)]
+        a += ["-f", formatSelector(quality: spec.quality, codec: s.codec, audioOnly: spec.audioOnly, canMerge: canMerge,
+                                   avoidHLS: Sites.isYouTube(spec.url))]
         if spec.audioOnly {
             a += ["-x", "--audio-format", "mp3", "--audio-quality", "0"]
         } else if canMerge {

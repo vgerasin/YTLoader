@@ -130,6 +130,8 @@ extension Engine {
                 it.errorKind = ""
                 it.attempts = 0
                 it.updateRetried = false
+                it.fallback = 0
+                it.forbiddenRetries = 0
             }
             it.deferMode = ""
             it.deferTime = ""
@@ -147,6 +149,8 @@ extension Engine {
     func cancel(_ id: String) {
         guard let it = item(id) else { return }
         let temp = it.tempFiles
+        let tempDir = tempDirPath(for: id)
+        let running = jobs[id] != nil
         if let job = jobs[id] {
             job.intent = .cancel
             job.process?.interrupt()
@@ -154,6 +158,8 @@ extension Engine {
         }
         items.removeAll { $0.id == id }
         removeTempFiles(temp)
+        // пока процесс жив, папку не трогаем — её уберёт finishDownload
+        if !running { removeTempDir(tempDir) }
         dirty = true
         scheduleSave()
     }
@@ -180,6 +186,24 @@ extension Engine {
             .filter { group == nil || group!.isEmpty || $0.groupId == group! }
             .map { $0.id }
         for id in ids { action(id) }
+    }
+
+    /// Скрытая папка для недокачанных частей и обложки одной загрузки.
+    /// Лежит внутри папки загрузок (тот же диск — готовый файл переезжает мгновенно),
+    /// но в Finder не видна.
+    func tempDirPath(for id: String) -> String {
+        (settings.folder as NSString).appendingPathComponent(".ytloader-tmp/" + id)
+    }
+
+    func removeTempDir(_ path: String) {
+        guard !path.isEmpty, path.contains("/.ytloader-tmp/") else { return }
+        let fm = FileManager.default
+        try? fm.removeItem(atPath: path)
+        let parent = (path as NSString).deletingLastPathComponent
+        if (parent as NSString).lastPathComponent == ".ytloader-tmp",
+           let left = try? fm.contentsOfDirectory(atPath: parent), left.isEmpty {
+            try? fm.removeItem(atPath: parent)
+        }
     }
 
     func removeTempFiles(_ paths: [String]) {

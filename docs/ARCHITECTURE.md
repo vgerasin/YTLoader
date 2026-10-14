@@ -72,7 +72,7 @@ window.toast("текст");      // короткое уведомление вн
 `deferMode` (`wifi | time | manual`), `deferTime`, `filepath`, `dateLabel`.
 
 **Настройки (`settings`):** `folder`, `defaultQuality`, `maxParallel`, `speedLimit`, `organize`
-(`none | channel | playlist`), `codec` (`any | h264 | av1`), `cookieBrowser`, `filenameTemplate`,
+(`none | channel | playlist`), `codec` (`h264 | any | av1`, по умолчанию `h264` — открывается в QuickTime; поле `schema` нужно для одноразовой миграции старого «any»), `cookieBrowser`, `filenameTemplate`,
 `subtitles` (`none | ru,en | all`), `subsEmbed`, `chapters`, `sponsorblock`, `wifiOnly`, `autoResume`,
 `clipboardWatch`, `autoUpdate`, `notify`, `dockBadge`, `menuBar`, `theme`, `density`, `accent`, `language`, `onboarded`.
 
@@ -111,7 +111,12 @@ window.toast("текст");      // короткое уведомление вн
   (`ArgsBuilder.progressTemplate`), `ProgressTracker` складывает его в общую полосу из участков по дорожкам.
 - Пауза — `SIGINT`: yt-dlp оставляет `.part`, продолжение докачивает. Отмена удаляет недокачанное.
 - Сбой разбирает `ErrorClassifier`; часть случаев чинится сама: cookies не читаются → повтор без них,
-  403 / «unable to extract» → обновление yt-dlp и повтор, сетевая ошибка → до трёх повторов с паузой.
+  403 → повтор со свежими ссылками, затем (YouTube) запасные клиенты `tv,android_vr,web_safari`, затем обновление yt-dlp и повтор;
+  «unable to extract» → обновление yt-dlp и повтор; сетевая ошибка → до трёх повторов с паузой.
+- Недокачанные части и обложка пишутся в `-P temp:<папка>/.ytloader-tmp/<id>`; готовый файл yt-dlp переносит оттуда сам
+  (`after_move`), папка удаляется после завершения и отмены, при паузе и ошибке остаётся для докачки.
+- Прогресс: доля дорожки — по номеру фрагмента (HLS/DASH) или по байтам, вес дорожки — размер из разбора ссылки; процент не убывает.
+  На YouTube селектор формата сначала берёт форматы без `m3u8` (`[protocol!*=m3u8]`), потом любые.
 - Очередь, история и настройки сохраняются в `~/Library/Application Support/YTLoader/*.json`, журнал — в `~/Library/Logs/YTLoader/`.
 
 ## Сборка новой версии

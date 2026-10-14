@@ -8,7 +8,7 @@ public struct Settings: Codable, Equatable {
     public var maxParallel: Int = 2                  // 1, 2, 3, 4, 6
     public var speedLimit: String = ""               // "" | 1M | 3M | 5M | 10M
     public var organize: String = "none"             // none | channel | playlist
-    public var codec: String = "any"                 // any | h264 | av1
+    public var codec: String = "h264"                // h264 | any | av1; h264 открывается в QuickTime
     public var cookieBrowser: String = "none"        // chrome | firefox | safari | edge | brave | none
     public var filenameTemplate: String = Settings.defaultTemplate
     public var subtitles: String = "none"            // none | ru,en | all
@@ -29,6 +29,8 @@ public struct Settings: Codable, Equatable {
     public var keepHistory: Int = 300
     public var lastUpdateCheck: Double = 0
     public var onboarded: Bool = false
+    /// Версия схемы настроек: 2 — кодек по умолчанию H.264 (раньше «любой» отдавал VP9/AV1, которые QuickTime не открывает).
+    public var schema: Int = 2
 
     public static let defaultTemplate = "%(title)s [%(id)s].%(ext)s"
 
@@ -38,7 +40,7 @@ public struct Settings: Codable, Equatable {
         case folder, defaultQuality, maxParallel, speedLimit, organize, codec, cookieBrowser
         case filenameTemplate, subtitles, subsEmbed, chapters, sponsorblock, wifiOnly, autoResume
         case clipboardWatch, autoUpdate, notify, dockBadge, menuBar, theme, density, accent
-        case language, keepHistory, lastUpdateCheck, onboarded
+        case language, keepHistory, lastUpdateCheck, onboarded, schema
     }
 
     public init(from decoder: Decoder) throws {
@@ -73,6 +75,12 @@ public struct Settings: Codable, Equatable {
         keepHistory = get(.keepHistory, keepHistory)
         lastUpdateCheck = get(.lastUpdateCheck, lastUpdateCheck)
         onboarded = get(.onboarded, onboarded)
+        schema = get(.schema, 1)
+        if schema < 2 {
+            // «любой кодек» из прежних версий — это был выбор по умолчанию, а не осознанный: возвращаем совместимый H.264
+            if codec == "any" { codec = "h264" }
+            schema = 2
+        }
         sanitize()
     }
 

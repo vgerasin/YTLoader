@@ -66,8 +66,8 @@
 
 ## Установка
 
-1. Скачайте **[YTLoader-5.0.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.0.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
-   Отдельный образ только для Intel: **[YTLoader-5.0-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.0-intel.dmg)**.
+1. Скачайте **[YTLoader-5.1.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.1.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
+   Отдельный образ только для Intel: **[YTLoader-5.1-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.1-intel.dmg)**.
    Контрольные суммы SHA-256 — в файле [downloads/SHA256SUMS](downloads/SHA256SUMS).
 2. Откройте DMG и перетащите YTLoader в «Программы».
 3. Первый запуск: приложение подписано без аккаунта разработчика Apple, поэтому macOS может его не открыть.

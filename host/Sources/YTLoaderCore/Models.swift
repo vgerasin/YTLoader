@@ -71,6 +71,8 @@ public final class Item: Codable {
     public var tempFiles: [String] = []
     public var resolved: Bool = false            // метаданные уже получены
     var notBefore: Double = 0                    // не запускать раньше этого момента (повтор после сбоя сети)
+    var fallback: Int = 0                        // 0 — обычные настройки, 1 — запасные клиенты YouTube
+    var forbiddenRetries: Int = 0                // сколько раз уже повторяли после отказа 403
 
     public init(id: String = shortID(), url: String, title: String) {
         self.id = id

@@ -6,7 +6,7 @@ extension Engine {
     func startResolve(_ it: Item) {
         let args = ArgsBuilder.resolveArgs(url: it.url, settings: settings, tools: tools,
                                            audioOnly: it.audioOnly, quality: it.quality,
-                                           noCookies: it.noCookies)
+                                           noCookies: it.noCookies, fallback: it.fallback)
         let job = Job(kind: .resolve)
         jobs[it.id] = job
         let id = it.id
@@ -240,7 +240,8 @@ extension Engine {
                                 sectionFrom: it.isEntry ? "" : it.sectionFrom,
                                 sectionTo: it.isEntry ? "" : it.sectionTo,
                                 noCookies: it.noCookies, groupTitle: it.groupTitle,
-                                printFile: printFile)
+                                printFile: printFile, tempDir: tempDirPath(for: it.id),
+                                fallback: it.fallback)
         let args = ArgsBuilder.downloadArgs(spec, settings: settings, tools: tools)
 
         // Полосу прогресса начинаем заново: yt-dlp сам докачает .part, а счётчик покажет остаток.
@@ -250,6 +251,7 @@ extension Engine {
         if it.audioOnly { tracker.forcedKind = "audio" }
         let job = Job(kind: .download, tracker: tracker)
         job.printFile = printFile
+        job.tempDir = spec.tempDir
         jobs[it.id] = job
 
         it.status = .downloading
@@ -328,7 +330,10 @@ extension Engine {
         defer { try? FileManager.default.removeItem(atPath: job.printFile) }
         guard let it = item(id) else {
             // загрузку отменили: убираем недокачанные файлы
-            if job.intent == .cancel { removeTempFiles(job.destinations) }
+            if job.intent == .cancel {
+                removeTempFiles(job.destinations)
+                removeTempDir(job.tempDir)
+            }
             return
         }
         it.speed = 0
@@ -340,6 +345,7 @@ extension Engine {
             return
         case .cancel:
             removeTempFiles(job.destinations)
+            removeTempDir(job.tempDir)
             return
         case .none:
             break
@@ -373,6 +379,7 @@ extension Engine {
         history.insert(entry, at: 0)
         if history.count > settings.keepHistory { history.removeLast(history.count - settings.keepHistory) }
         items.removeAll { $0.id == it.id }
+        removeTempDir(job.tempDir)
         Log.shared.write("done \(path) (\(size) bytes)")
 
         let lang = settings.lang
@@ -413,6 +420,24 @@ extension Engine {
             it.noCookies = true
             requeue(it)
             return
+        }
+        // Отказ 403 (чаще всего посреди загрузки: ссылка на видео «протухла»). Лесенка, пока не показали ошибку:
+        // 1) просто повторить — yt-dlp возьмёт новые ссылки и докачает начатое;
+        // 2) на YouTube — запасной набор клиентов (плееров);
+        // 3) ниже — обновить yt-dlp.
+        if c.kind == .forbidden, tools.hasYtdlp {
+            if it.forbiddenRetries < 1 {
+                it.forbiddenRetries += 1
+                it.notBefore = Date().timeIntervalSince1970 + 3
+                requeue(it)
+                return
+            }
+            if Sites.isYouTube(it.url), it.fallback == 0 {
+                it.fallback = 1
+                it.notBefore = Date().timeIntervalSince1970 + 3
+                requeue(it)
+                return
+            }
         }
         // Старый yt-dlp — самая частая причина 403 и «unable to extract». Обновляем и повторяем один раз.
         let looksOutdated = c.kind == .forbidden || c.kind == .jsRuntime || text.contains("unable to extract")

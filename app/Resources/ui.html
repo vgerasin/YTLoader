@@ -567,8 +567,8 @@ const I18N = {
     "Подпапки по каналам": "Subfolders per channel", "Подпапки по плейлистам": "Subfolders per playlist",
     "Любой — что отдаст сайт":
       "Any — whatever the site serves",
-    "Обычно AV1: меньше весит": "Usually AV1: smaller files",
-    "Открывается в Quick Look и Final Cut": "Opens in Quick Look and Final Cut",
+    "Может не открыться в QuickTime": "May not open in QuickTime",
+    "Открывается в QuickTime, Quick Look и Final Cut": "Opens in QuickTime, Quick Look and Final Cut",
     "Предпочитать AV1": "Prefer AV1", "Меньше размер, хуже совместимость": "Smaller, less compatible",
     "Карточки": "Cards", "Компактные карточки": "Compact cards", "Плотный список": "Dense list",
     "Вшивать субтитры в файл": "Embed subtitles in the file",
@@ -692,8 +692,8 @@ const I18N = {
     "Подпапки по каналам": "Unterordner je Kanal", "Подпапки по плейлистам": "Unterordner je Playlist",
     "Любой — что отдаст сайт":
       "Beliebig — was die Seite liefert",
-    "Обычно AV1: меньше весит": "Meist AV1: kleinere Dateien",
-    "Открывается в Quick Look и Final Cut": "Öffnet sich in Quick Look und Final Cut",
+    "Может не открыться в QuickTime": "Lässt sich evtl. nicht in QuickTime öffnen",
+    "Открывается в QuickTime, Quick Look и Final Cut": "Öffnet sich in QuickTime, Quick Look und Final Cut",
     "Предпочитать AV1": "AV1 bevorzugen", "Меньше размер, хуже совместимость": "Kleiner, schlechter kompatibel",
     "Карточки": "Karten", "Компактные карточки": "Kompakte Karten", "Плотный список": "Dichte Liste",
     "Вшивать субтитры в файл": "Untertitel einbetten",
@@ -816,8 +816,8 @@ const I18N = {
     "Подпапки по каналам": "Sous-dossiers par chaîne", "Подпапки по плейлистам": "Sous-dossiers par playlist",
     "Любой — что отдаст сайт":
       "Peu importe — ce que donne le site",
-    "Обычно AV1: меньше весит": "Souvent AV1 : fichiers plus légers",
-    "Открывается в Quick Look и Final Cut": "S'ouvre dans Coup d'œil et Final Cut",
+    "Может не открыться в QuickTime": "Peut ne pas s'ouvrir dans QuickTime",
+    "Открывается в QuickTime, Quick Look и Final Cut": "S'ouvre dans QuickTime, Coup d'œil et Final Cut",
     "Предпочитать AV1": "Préférer AV1", "Меньше размер, хуже совместимость": "Plus léger, moins compatible",
     "Карточки": "Cartes", "Компактные карточки": "Cartes compactes", "Плотный список": "Liste dense",
     "Вшивать субтитры в файл": "Intégrer les sous-titres",
@@ -940,8 +940,8 @@ const I18N = {
     "Подпапки по каналам": "Subcarpetas por canal", "Подпапки по плейлистам": "Subcarpetas por lista",
     "Любой — что отдаст сайт":
       "Cualquiera — lo que dé el sitio",
-    "Обычно AV1: меньше весит": "Suele ser AV1: ocupa menos",
-    "Открывается в Quick Look и Final Cut": "Se abre en Vista rápida y Final Cut",
+    "Может не открыться в QuickTime": "Puede que no se abra en QuickTime",
+    "Открывается в QuickTime, Quick Look и Final Cut": "Se abre en QuickTime, Vista rápida y Final Cut",
     "Предпочитать AV1": "Preferir AV1", "Меньше размер, хуже совместимость": "Ocupa menos, menos compatible",
     "Карточки": "Tarjetas", "Компактные карточки": "Tarjetas compactas", "Плотный список": "Lista densa",
     "Вшивать субтитры в файл": "Incrustar subtítulos",
@@ -1102,8 +1102,8 @@ const SPEED = [
   {label: "3 МБ/с", value: "3M"}, {label: "5 МБ/с", value: "5M"}, {label: "10 МБ/с", value: "10M"},
 ];
 const CODEC = [
-  {label: "Любой — что отдаст сайт", value: "any", hint: "Обычно AV1: меньше весит"},
-  {label: "H.264", value: "h264", hint: "Открывается в Quick Look и Final Cut"},
+  {label: "H.264", value: "h264", hint: "Открывается в QuickTime, Quick Look и Final Cut"},
+  {label: "Любой — что отдаст сайт", value: "any", hint: "Может не открыться в QuickTime"},
   {label: "Предпочитать AV1", value: "av1", hint: "Меньше размер, хуже совместимость"},
 ];
 const DENSITY = [
@@ -2003,7 +2003,7 @@ function wireSheet() {
   ddInit("ddSubs", SUBS, st.subtitles || "none", v => saveSettings({subtitles: v}));
   ddInit("ddSpeed", SPEED, st.speedLimit || "", v => saveSettings({speedLimit: v}));
   ddInit("ddOrganize", ORGANIZE, st.organize || "none", v => saveSettings({organize: v}));
-  ddInit("ddCodec", CODEC, st.codec || "any", v => saveSettings({codec: v}));
+  ddInit("ddCodec", CODEC, st.codec || "h264", v => saveSettings({codec: v}));
   ddInit("ddLang", LANGS, st.language || "auto", v => {
     saveSettings({language: v});
     LAST.settings.language = v;

@@ -96,6 +96,27 @@ final class E2ETests: XCTestCase {
         return d.path
     }
 
+    /// В папке загрузок после завершения — только готовые файлы: ни .part, ни .ytdl, ни обложки, ни скрытой временной папки.
+    private func assertOnlyFinished(_ folder: String, count: Int, file: StaticString = #filePath, line: UInt = #line) {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder)) ?? []
+        XCTAssertEqual(names.count, count, "в папке загрузок лишнее: \(names)", file: file, line: line)
+        XCTAssertFalse(names.contains { $0.hasPrefix(".") || $0.hasSuffix(".part") || $0.hasSuffix(".ytdl") || $0.hasSuffix(".jpg") },
+                       "служебные файлы в папке загрузок: \(names)", file: file, line: line)
+    }
+
+    /// Процент каждой загрузки за всё время — не убывает и не прыгает на 100, пока файл качается.
+    private func assertProgressSane(_ c: Collector, file: StaticString = #filePath, line: UInt = #line) {
+        var lastPct: [String: Int] = [:]
+        for st in c.states {
+            for it in st["items"] as? [[String: Any]] ?? [] where (it["status"] as? String) == "downloading" {
+                let id = it["id"] as? String ?? ""
+                let pct = (it["pct"] as? NSNumber)?.intValue ?? 0
+                XCTAssertGreaterThanOrEqual(pct, lastPct[id] ?? 0, "процент уменьшился", file: file, line: line)
+                lastPct[id] = pct
+            }
+        }
+    }
+
     func testPlainFileDownloadWithProgressAndDuplicates() throws {
         try requireE2E()
         let folder = tempFolder()
@@ -120,6 +141,8 @@ final class E2ETests: XCTestCase {
         }
         XCTAssertTrue(sawProgress, "never saw a downloading state")
         XCTAssertFalse(c.notes.isEmpty, "completion notification expected")
+        assertOnlyFinished(folder, count: 1)
+        assertProgressSane(c)
 
         // повторная ссылка: приложение спрашивает про дубль
         e.handle(path: "/api/add", body: ["text": url])
@@ -175,7 +198,8 @@ final class E2ETests: XCTestCase {
         try requireE2E()
         let tools = Components.detect()
         try XCTSkipUnless(tools.hasFFmpeg, "ffmpeg is not installed")
-        let (e, c) = try makeEngine(folder: tempFolder())
+        let folder = tempFolder()
+        let (e, c) = try makeEngine(folder: folder)
         e.handle(path: "/api/settings", body: ["speedLimit": "", "maxParallel": 1])
         e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/hls/master.m3u8", "quality": "1080p"])
         try wait("resolved with streams") {
@@ -185,6 +209,29 @@ final class E2ETests: XCTestCase {
         let path = c.history[0]["filepath"] as? String ?? ""
         XCTAssertTrue(path.hasSuffix(".mp4"), path)
         XCTAssertTrue(FileManager.default.fileExists(atPath: path))
+        assertOnlyFinished(folder, count: 1)
+        assertProgressSane(c)
+        e.shutdown()
+    }
+
+    /// Отмена: недокачанное и обложка удаляются, в папке загрузок ничего не остаётся.
+    func testCancelLeavesNoTraceInDownloads() throws {
+        try requireE2E()
+        let folder = tempFolder()
+        let (e, c) = try makeEngine(folder: folder)
+        e.handle(path: "/api/settings", body: ["speedLimit": "100K"])
+        e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/sample.mp4"])
+        try wait("downloading") { c.items.first?["status"] as? String == "downloading" }
+        let id = c.items[0]["id"] as? String ?? ""
+        // недокачанные части лежат в скрытой папке, а не рядом с будущим файлом
+        let temp = (folder as NSString).appendingPathComponent(".ytloader-tmp/" + id)
+        try wait("temp dir with partial data") { FileManager.default.fileExists(atPath: temp) }
+        let visible = (try? FileManager.default.contentsOfDirectory(atPath: folder))?.filter { !$0.hasPrefix(".") } ?? []
+        XCTAssertTrue(visible.isEmpty, "посреди загрузки в видимой папке: \(visible)")
+
+        e.handle(path: "/api/cancel", body: ["id": id])
+        try wait("removed") { c.items.isEmpty }
+        try wait("temp dir removed") { (try? FileManager.default.contentsOfDirectory(atPath: folder))?.isEmpty ?? false }
         e.shutdown()
     }
 

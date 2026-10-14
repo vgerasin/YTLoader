@@ -124,4 +124,18 @@ final class ModelTests: XCTestCase {
         XCTAssertLessThanOrEqual(d!.timeIntervalSince(now), 24 * 3600 + 1)
         XCTAssertNil(Engine.nextOccurrence(of: "25:99"))
     }
+
+    func testDefaultCodecIsH264ForQuickTime() throws {
+        XCTAssertEqual(Settings().codec, "h264")
+        // старый файл настроек без поля schema: «any» был значением по умолчанию — меняем на H.264 один раз
+        let old = try JSONDecoder().decode(Settings.self, from: Data(#"{"codec":"any","theme":"light"}"#.utf8))
+        XCTAssertEqual(old.codec, "h264")
+        XCTAssertEqual(old.theme, "light")
+        XCTAssertEqual(old.schema, 2)
+        // после миграции выбор пользователя уважается
+        let saved = try JSONDecoder().decode(Settings.self, from: Data(#"{"codec":"any","schema":2}"#.utf8))
+        XCTAssertEqual(saved.codec, "any")
+        let av1 = try JSONDecoder().decode(Settings.self, from: Data(#"{"codec":"av1"}"#.utf8))
+        XCTAssertEqual(av1.codec, "av1")
+    }
 }

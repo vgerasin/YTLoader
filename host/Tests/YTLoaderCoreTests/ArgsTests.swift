@@ -100,4 +100,53 @@ final class ArgsTests: XCTestCase {
                                         tools: tools(), audioOnly: false, quality: "1080p", noCookies: false)
         XCTAssertFalse(b.contains("--no-playlist"))
     }
+
+    func testYouTubeSelectorPrefersPlainHTTPSOverHLS() {
+        let yt = ArgsBuilder.formatSelector(quality: "1080p", codec: "h264", audioOnly: false, canMerge: true, avoidHLS: true)
+        XCTAssertTrue(yt.hasPrefix("bv*[vcodec^=avc1][height<=?1080][protocol!*=m3u8]+ba[ext=m4a][protocol!*=m3u8]/"), yt)
+        // запасные варианты без ограничения протокола остаются — иначе ролик без https-форматов не скачать
+        XCTAssertTrue(yt.hasSuffix("/b[height<=?1080]/b"), yt)
+        XCTAssertEqual(ArgsBuilder.formatSelector(quality: "720p", codec: "any", audioOnly: true, canMerge: true, avoidHLS: true),
+                       "ba[protocol!*=m3u8]/bestaudio/best")
+        // на других сайтах селектор прежний
+        XCTAssertFalse(ArgsBuilder.formatSelector(quality: "1080p", codec: "h264", audioOnly: false, canMerge: true)
+            .contains("m3u8"))
+    }
+
+    func testYouTubeArgsAvoidHLSButOtherSitesDoNot() {
+        let yt = DownloadSpec(url: "https://www.youtube.com/watch?v=abc", audioOnly: false, quality: "1080p")
+        let a = ArgsBuilder.downloadArgs(yt, settings: Settings(), tools: tools())
+        XCTAssertTrue(a[a.firstIndex(of: "-f")! + 1].contains("protocol!*=m3u8"))
+        let vk = DownloadSpec(url: "https://vk.com/video-1_2", audioOnly: false, quality: "1080p")
+        let b = ArgsBuilder.downloadArgs(vk, settings: Settings(), tools: tools())
+        XCTAssertFalse(b[b.firstIndex(of: "-f")! + 1].contains("m3u8"))
+    }
+
+    func testTempDirKeepsPartsAndThumbnailOutOfDownloads() {
+        var spec = DownloadSpec(url: "https://vimeo.com/76979871", audioOnly: false, quality: "1080p")
+        spec.tempDir = "/Users/me/Downloads/.ytloader-tmp/abc"
+        let a = ArgsBuilder.downloadArgs(spec, settings: Settings(), tools: tools())
+        let i = a.firstIndex(of: "temp:/Users/me/Downloads/.ytloader-tmp/abc")
+        XCTAssertNotNil(i)
+        XCTAssertEqual(a[i! - 1], "-P")
+        // без временной папки параметра нет
+        let plain = ArgsBuilder.downloadArgs(DownloadSpec(url: "https://vimeo.com/1", audioOnly: false, quality: "1080p"),
+                                             settings: Settings(), tools: tools())
+        XCTAssertFalse(plain.contains { $0.hasPrefix("temp:") })
+    }
+
+    func testFallbackClientsAfterForbidden() {
+        func clients(_ fallback: Int) -> String {
+            var spec = DownloadSpec(url: "https://www.youtube.com/watch?v=abc", audioOnly: false, quality: "1080p")
+            spec.fallback = fallback
+            let a = ArgsBuilder.downloadArgs(spec, settings: Settings(), tools: tools())
+            return a[a.firstIndex(of: "--extractor-args")! + 1]
+        }
+        XCTAssertEqual(clients(0), "youtube:player_client=default,web_embedded")
+        XCTAssertEqual(clients(1), "youtube:player_client=tv,android_vr,web_safari")
+        // на других сайтах запасных клиентов YouTube нет
+        var vk = DownloadSpec(url: "https://vk.com/video-1_2", audioOnly: false, quality: "1080p")
+        vk.fallback = 1
+        XCTAssertFalse(ArgsBuilder.downloadArgs(vk, settings: Settings(), tools: tools()).contains("--extractor-args"))
+    }
 }
