@@ -23,6 +23,15 @@ final class ProgressTests: XCTestCase {
         XCTAssertNil(p.eta)
     }
 
+    func testHLSAudioHasNoCodecButIsAudio() {
+        let line = "YTL|downloading|1024|NA|217140.0|0|NA|none|NA|0|11"
+        guard case .progress(let p) = ProgressParser.parse(line) else { return XCTFail("not progress") }
+        XCTAssertEqual(p.kind, "audio")
+        let direct = "YTL|downloading|1024|2256199|NA|NA|NA|NA|NA|NA|NA"
+        guard case .progress(let d) = ProgressParser.parse(direct) else { return XCTFail("not progress") }
+        XCTAssertEqual(d.kind, "video")
+    }
+
     func testOtherLines() {
         XCTAssertEqual(ProgressParser.parse("[download] Destination: /tmp/a.f137.mp4"), .destination("/tmp/a.f137.mp4"))
         XCTAssertEqual(ProgressParser.parse("[Merger] Merging formats into \"/tmp/a.mp4\""), .merging("/tmp/a.mp4"))

@@ -10,8 +10,12 @@ public enum AppPaths {
         return url
     }
 
+    /// Для тестов: хранить всё в другом каталоге.
+    public static var overrideRoot: URL?
+
     /// ~/Library/Application Support/YTLoader
     public static var appSupport: URL {
+        if let o = overrideRoot { return ensure(o) }
         let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return ensure(base.appendingPathComponent("YTLoader", isDirectory: true))
     }
@@ -31,6 +35,7 @@ public enum AppPaths {
 
     /// ~/Library/Logs/YTLoader/ytloader.log
     public static var logFile: URL {
+        if let o = overrideRoot { return ensure(o).appendingPathComponent("ytloader.log") }
         let lib = fm.urls(for: .libraryDirectory, in: .userDomainMask)[0]
         let dir = ensure(lib.appendingPathComponent("Logs/YTLoader", isDirectory: true))
         return dir.appendingPathComponent("ytloader.log")

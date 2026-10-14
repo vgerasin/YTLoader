@@ -135,7 +135,7 @@ extension Engine {
         var streams: [StreamInfo] = []
         var height = 0
         for f in formats {
-            let v = (f["vcodec"] as? String) ?? "none"
+            let v = (f["vcodec"] as? String) ?? "unknown"
             let isVideo = v != "none"
             var size = Engine.number(f["filesize"])
             if size == 0 { size = Engine.number(f["filesize_approx"]) }
@@ -143,17 +143,35 @@ extension Engine {
                 size = tbr.doubleValue * 1000 / 8 * it.duration
             }
             streams.append(StreamInfo(kind: it.audioOnly ? "audio" : (isVideo ? "video" : "audio"),
-                                      total: Int64(size), done: 0, active: false, estimated: true))
+                                      total: Int64(jsonNum(size)), done: 0, active: false, estimated: true))
             if isVideo { height = max(height, Int(Engine.number(f["height"]))) }
         }
         if !it.audioOnly, height > 0 { it.quality = "\(height)p" }
-        // Одиночный поток без известного размера — полоса без сегментов
-        if streams.count == 1, streams[0].total == 0 { streams = [] }
+        Engine.fillUnknownSizes(&streams, duration: it.duration)
         it.streams = streams
         it.total = streams.reduce(Int64(0)) { $0 + $1.total }
         it.resolved = true
         it.error = ""
         it.status = nextStatusAfterResolve(it)
+    }
+
+    /// Размер дорожки не всегда известен заранее. Чтобы участок полосы не схлопнулся
+    /// в ноль, подставляем прикидку: звук ≈ 128 кбит/с, видео — раз в девять больше.
+    static func fillUnknownSizes(_ streams: inout [StreamInfo], duration: Double) {
+        // одна дорожка без размера — полоса без сегментов, прогресс покажет сам yt-dlp
+        if streams.count < 2 { 
+            if streams.count == 1, streams[0].total == 0 { streams = [] }
+            return
+        }
+        let audioGuess = duration > 0 ? Int64(16_000 * duration) : 1_000_000
+        for i in streams.indices where streams[i].total == 0 {
+            if streams[i].kind == "audio" {
+                streams[i].total = audioGuess
+            } else {
+                let known = streams.filter { $0.kind == "audio" }.map { $0.total }.max() ?? audioGuess
+                streams[i].total = max(known * 9, 1_000_000)
+            }
+        }
     }
 
     func nextStatusAfterResolve(_ it: Item) -> ItemStatus {
@@ -228,7 +246,9 @@ extension Engine {
         // Полосу прогресса начинаем заново: yt-dlp сам докачает .part, а счётчик покажет остаток.
         var streams = it.streams
         for i in streams.indices { streams[i].done = 0; streams[i].active = false }
-        let job = Job(kind: .download, tracker: ProgressTracker(streams: streams))
+        var tracker = ProgressTracker(streams: streams)
+        if it.audioOnly { tracker.forcedKind = "audio" }
+        let job = Job(kind: .download, tracker: tracker)
         job.printFile = printFile
         jobs[it.id] = job
 

@@ -42,7 +42,12 @@ public enum Components {
     // MARK: - поиск
 
     private static func searchDirs() -> [String] {
-        var dirs = [AppPaths.binDir.path]
+        var dirs: [String] = []
+        // для тестов и разработки: дополнительные каталоги с инструментами
+        if let extra = ProcessInfo.processInfo.environment["YTL_EXTRA_BIN"] {
+            dirs += extra.split(separator: ":").map(String.init)
+        }
+        dirs.append(AppPaths.binDir.path)
         if let b = AppPaths.bundledBin { dirs.append(b) }
         dirs += ["/opt/homebrew/bin", "/usr/local/bin", NSHomeDirectory() + "/.deno/bin",
                  NSHomeDirectory() + "/.bun/bin", NSHomeDirectory() + "/.local/bin"]

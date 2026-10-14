@@ -13,14 +13,10 @@ public struct ProgressLine: Equatable {
     public var fragIndex: Int?
     public var fragCount: Int?
 
-    /// Тип текущей дорожки по кодекам.
+    /// Тип текущей дорожки: у аудиоформата видеокодека нет («none»),
+    /// а звуковой кодек у HLS часто не указан вовсе («NA»).
     public var kind: String {
-        let v = vcodec.lowercased()
-        let a = acodec.lowercased()
-        let noVideo = v == "none"
-        let hasAudio = !(a == "none" || a == "na" || a.isEmpty)
-        if noVideo && hasAudio { return "audio" }
-        return "video"
+        vcodec.lowercased() == "none" ? "audio" : "video"
     }
 
     public var knownTotal: Int64? {
@@ -110,6 +106,8 @@ public struct ProgressTracker {
     var idx = 0
     var lastDownloaded: Int64 = 0
     var predicted: Bool
+    /// В режиме «только звук» любая дорожка считается звуковой.
+    public var forcedKind: String?
 
     public init(streams: [StreamInfo] = []) {
         self.streams = streams
@@ -126,7 +124,7 @@ public struct ProgressTracker {
     }
 
     public mutating func update(_ p: ProgressLine) -> Snapshot {
-        let kind = p.kind
+        let kind = forcedKind ?? p.kind
         if streams.isEmpty { streams.append(StreamInfo(kind: kind)) }
 
         // Если дорожка сменилась или счётчик байт пошёл заново — это уже следующий файл.

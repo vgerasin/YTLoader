@@ -26,9 +26,26 @@ jobs:
           set -o pipefail
           swift build -c release --arch arm64 --arch x86_64 2>&1 | tee build.log
 
-      - name: Test
+      - name: Tools for end-to-end tests (yt-dlp, ffmpeg)
+        if: always()
+        run: |
+          set +e
+          {
+            python3 -m pip install --break-system-packages yt-dlp || python3 -m pip install yt-dlp
+            mkdir -p "$RUNNER_TEMP/bin"
+            printf '#!/bin/sh\nexec python3 -m yt_dlp "$@"\n' > "$RUNNER_TEMP/bin/yt-dlp"
+            chmod +x "$RUNNER_TEMP/bin/yt-dlp"
+            "$RUNNER_TEMP/bin/yt-dlp" --version
+            brew install ffmpeg
+            ffmpeg -version | head -1
+            echo "YTL_EXTRA_BIN=$RUNNER_TEMP/bin" >> "$GITHUB_ENV"
+          } 2>&1 | tee host/tools.log
+
+      - name: Test (unit + end-to-end)
         if: always()
         working-directory: host
+        env:
+          YTL_E2E: "1"
         run: |
           set -o pipefail
           swift test 2>&1 | tee test.log
@@ -44,7 +61,7 @@ jobs:
           fi
           cd /tmp/logrepo
           rm -rf latest && mkdir latest
-          for f in build test swift-version; do cp "$GITHUB_WORKSPACE/host/$f.log" latest/ 2>/dev/null; done
+          for f in build test tools swift-version; do cp "$GITHUB_WORKSPACE/host/$f.log" latest/ 2>/dev/null; done
           echo "${{ github.sha }} ${{ github.ref_name }} $(date -u +%FT%TZ)" > latest/info.txt
           git config user.name ci && git config user.email ci@example.invalid
           git add -A && git commit -q -m "logs for ${{ github.sha }}" && git push -q origin ci-logs
