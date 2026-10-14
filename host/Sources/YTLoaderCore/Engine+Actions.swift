@@ -283,6 +283,43 @@ extension Engine {
         }
     }
 
+    /// При запуске: убирает старые копии yt-dlp и, если работаем с одиночным файлом (медленный старт),
+    /// в фоне переходит на распакованную сборку. Скачивание идёт один раз, загрузки в это время идут как обычно.
+    @discardableResult
+    func tidyAndMigrateYtdlp(_ found: ToolPaths) -> Bool {
+        guard !shuttingDown else { return false }
+        if Components.isUnpacked(found.ytdlp) {
+            DispatchQueue.global(qos: .utility).async { Components.pruneOldYtdlp(keeping: found.ytdlp) }
+            return false
+        }
+        // в тестах и при ручной настройке путей ничего не скачиваем
+        guard settings.autoUpdate, ProcessInfo.processInfo.environment["YTL_EXTRA_BIN"] == nil,
+              Components.shouldMigrateToUnpacked(found) else { return false }
+        Log.shared.write("moving to the unpacked yt-dlp build (faster start)")
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            do { try Components.install("yt-dlp") } catch {
+                Log.shared.write("unpacked yt-dlp install failed: \(error)")
+                Components.markMigrationFailed()
+                return
+            }
+            let fresh = Components.detect()
+            if !Components.isUnpacked(fresh.ytdlp) { Components.markMigrationFailed() }
+            self?.q.async {
+                guard let self = self else { return }
+                self.tools = fresh
+                self.dirty = true
+                self.settings.lastUpdateCheck = Date().timeIntervalSince1970   // свежий yt-dlp только что скачан
+                self.scheduleSave()
+                Log.shared.write("tools: yt-dlp=\(fresh.ytdlpVersion) at \(fresh.ytdlp)")
+                if Components.isUnpacked(fresh.ytdlp) {
+                    // старый одиночный файл: запущенные из него загрузки продолжают работать
+                    try? FileManager.default.removeItem(at: AppPaths.binDir.appendingPathComponent("yt-dlp"))
+                }
+            }
+        }
+        return true
+    }
+
     func runUpdate(manual: Bool) {
         guard !updating, !shuttingDown else { return }
         let lang = settings.lang

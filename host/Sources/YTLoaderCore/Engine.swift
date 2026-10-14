@@ -141,7 +141,8 @@ public final class Engine {
                 self.toolsReady = true
                 self.dirty = true
                 Log.shared.write("tools: yt-dlp=\(found.ytdlpVersion) ffmpeg=\(found.hasFFmpeg) ffprobe=\(found.hasFFprobe) js=\(found.jsKind)")
-                if thenAutoUpdate, self.settings.autoUpdate, found.hasYtdlp {
+                let migrating = thenAutoUpdate && self.tidyAndMigrateYtdlp(found)
+                if thenAutoUpdate, !migrating, self.settings.autoUpdate, found.hasYtdlp {
                     let week: Double = 7 * 24 * 3600
                     if Date().timeIntervalSince1970 - self.settings.lastUpdateCheck > week {
                         self.runUpdate(manual: false)

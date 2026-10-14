@@ -30,6 +30,9 @@ public enum Components {
         switch name {
         case "yt-dlp":
             return URL(string: "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos")
+        case "yt-dlp-dist":
+            // «распакованная» сборка: тот же yt-dlp, но без распаковки самого себя при каждом запуске
+            return URL(string: "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos.zip")
         case "ffmpeg", "ffprobe":
             return URL(string: "https://ffmpeg.martin-riedl.de/redirect/latest/macos/\(ffArch)/release/\(name).zip")
         case "deno":
@@ -98,9 +101,11 @@ public enum Components {
         loadDiskCache()
         if let v = versionCache[key] { cacheLock.unlock(); return v }
         cacheLock.unlock()
-        guard let out = runCapture(path, ["--version"], timeout: 40),
+        let t0 = Date()
+        guard let out = runCapture(path, ["--version"], timeout: 60),
               let first = out.split(separator: "\n").first else { return nil }
         let v = String(first).trimmingCharacters(in: .whitespaces)
+        Log.shared.write("yt-dlp --version: \(Job.seconds(Date().timeIntervalSince(t0))) (\(path))")
         cacheLock.lock(); versionCache[key] = v; saveDiskCache(); cacheLock.unlock()
         return v
     }
@@ -126,7 +131,7 @@ public enum Components {
 
         // копий yt-dlp может быть несколько (своя, из приложения, из Homebrew); холодный запуск каждой — секунды,
         // поэтому спрашиваем версии одновременно
-        let candidates = executable("yt-dlp", in: dirs)
+        let candidates = distExecutables() + executable("yt-dlp", in: dirs)
         var versions = [String?](repeating: nil, count: candidates.count)
         let vLock = NSLock()
         DispatchQueue.concurrentPerform(iterations: candidates.count) { i in
@@ -196,6 +201,11 @@ public enum Components {
     /// Ставит один компонент в ~/Library/Application Support/YTLoader/bin.
     @discardableResult
     public static func install(_ name: String) throws -> String {
+        if name == "yt-dlp" {
+            do { return try installYtdlpUnpacked() } catch {
+                Log.shared.write("yt-dlp unpacked build not installed (\(error)); using the single-file build")
+            }
+        }
         guard let url = downloadURL(for: name) else { throw ComponentError("unknown component \(name)") }
         let fm = FileManager.default
         let target = AppPaths.binDir.appendingPathComponent(name)
@@ -236,6 +246,107 @@ public enum Components {
         }
         Log.shared.write("installed \(name) → \(target.path)")
         return target.path
+    }
+
+    // MARK: - yt-dlp без распаковки при запуске
+
+    // Официальный yt-dlp_macos — один файл, который при каждом запуске распаковывает себя во временную папку.
+    // На некоторых Mac (антивирус, проверка файлов) это занимает 15–20 секунд на КАЖДЫЙ запуск, а запусков два на ролик.
+    // Сборка yt-dlp_macos.zip — тот же yt-dlp, но уже распакованный: стартует за секунду-две.
+
+    static let distPrefix = "yt-dlp-dist-"
+    static let distExeName = "yt-dlp_macos"
+
+    /// Установленные распакованные сборки, самые новые по имени папки — первыми.
+    static func distExecutables() -> [String] {
+        let fm = FileManager.default
+        let names = ((try? fm.contentsOfDirectory(atPath: AppPaths.binDir.path)) ?? [])
+            .filter { $0.hasPrefix(distPrefix) }
+            .sorted { compareVersions(String($0.dropFirst(distPrefix.count)), String($1.dropFirst(distPrefix.count))) > 0 }
+        return names.map { AppPaths.binDir.path + "/" + $0 + "/" + distExeName }
+            .filter { fm.isExecutableFile(atPath: $0) }
+    }
+
+    public static func isUnpacked(_ ytdlpPath: String) -> Bool {
+        ytdlpPath.hasPrefix(AppPaths.binDir.path + "/" + distPrefix)
+    }
+
+    /// Стоит ли переходить на распакованную сборку: yt-dlp есть, он наш (в папке bin или внутри приложения),
+    /// ещё не распакованный, и недавно такая попытка не проваливалась.
+    public static func shouldMigrateToUnpacked(_ t: ToolPaths) -> Bool {
+        guard t.hasYtdlp, !isUnpacked(t.ytdlp) else { return false }
+        let ours = t.ytdlp.hasPrefix(AppPaths.binDir.path + "/")
+            || (AppPaths.bundledBin.map { t.ytdlp.hasPrefix($0 + "/") } ?? false)
+        guard ours else { return false }
+        if let m = (try? FileManager.default.attributesOfItem(atPath: migrationMarker.path))?[.modificationDate] as? Date,
+           Date().timeIntervalSince(m) < 3 * 24 * 3600 { return false }
+        return true
+    }
+
+    static var migrationMarker: URL { AppPaths.cacheDir.appendingPathComponent("unpacked-failed") }
+
+    public static func markMigrationFailed() {
+        try? Data("failed".utf8).write(to: migrationMarker)
+    }
+
+    /// Убирает старые копии: прежние распакованные сборки и одиночный файл, если уже работаем с распакованной.
+    /// Вызывается при запуске, пока ничего не качается.
+    public static func pruneOldYtdlp(keeping current: String) {
+        guard isUnpacked(current) else { return }
+        let fm = FileManager.default
+        let keepDir = ((current as NSString).deletingLastPathComponent as NSString).lastPathComponent
+        for name in (try? fm.contentsOfDirectory(atPath: AppPaths.binDir.path)) ?? [] where name.hasPrefix(distPrefix) && name != keepDir {
+            try? fm.removeItem(at: AppPaths.binDir.appendingPathComponent(name))
+        }
+        try? fm.removeItem(at: AppPaths.binDir.appendingPathComponent("yt-dlp"))
+    }
+
+    @discardableResult
+    static func installYtdlpUnpacked() throws -> String {
+        guard let url = downloadURL(for: "yt-dlp-dist") else { throw ComponentError("no url") }
+        let fm = FileManager.default
+        let zip = try download(url)
+        defer { try? fm.removeItem(at: zip) }
+
+        let work = AppPaths.cacheDir.appendingPathComponent("dist-" + shortID(), isDirectory: true)
+        try fm.createDirectory(at: work, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: work) }
+        let unzip = Process()
+        unzip.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+        unzip.arguments = ["-o", "-q", zip.path, "-d", work.path]
+        unzip.standardError = Pipe()
+        unzip.standardOutput = Pipe()
+        try unzip.run()
+        unzip.waitUntilExit()
+        let exe = work.appendingPathComponent(distExeName)
+        guard unzip.terminationStatus == 0, fm.fileExists(atPath: exe.path) else { throw ComponentError("unzip failed") }
+
+        chmod(exe.path, 0o755)
+        let xattr = Process()
+        xattr.executableURL = URL(fileURLWithPath: "/usr/bin/xattr")
+        xattr.arguments = ["-dr", "com.apple.quarantine", work.path]
+        xattr.standardError = Pipe()
+        xattr.standardOutput = Pipe()
+        try? xattr.run()
+        xattr.waitUntilExit()
+
+        let t0 = Date()
+        guard let out = runCapture(exe.path, ["--version"], timeout: 120),
+              let first = out.split(separator: "\n").first else { throw ComponentError("does not start on this Mac") }
+        let v = String(first).trimmingCharacters(in: .whitespaces)
+        let firstRun = Date().timeIntervalSince(t0)
+        // второй запуск показывает «настоящую» скорость старта: первый может включать разовую проверку файлов системой
+        let t1 = Date()
+        _ = runCapture(exe.path, ["--version"], timeout: 120)
+        let secondRun = Date().timeIntervalSince(t1)
+
+        // каждая версия — в своей папке, чтобы обновление не ломало загрузку, идущую из старой
+        let target = AppPaths.binDir.appendingPathComponent(distPrefix + v, isDirectory: true)
+        if !fm.fileExists(atPath: target.path) { try fm.moveItem(at: work, to: target) }
+        let finalExe = target.appendingPathComponent(distExeName).path
+        rememberVersion(v, ofYtdlp: finalExe)
+        Log.shared.write("installed yt-dlp \(v) (unpacked) → \(finalExe); start \(Job.seconds(firstRun)) first, \(Job.seconds(secondRun)) second")
+        return finalExe
     }
 
     // MARK: - обновление yt-dlp
