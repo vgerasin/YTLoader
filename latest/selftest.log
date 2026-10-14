@@ -1,0 +1,19 @@
+SELFTEST start
+SELFTEST snapshot 01-start
+SELFTEST snapshot 02-queue
+SELFTEST snapshot 03-history
+SELFTEST history text: 
+      превью
+     
+       sample
+         1080pmp4
+       493 КБ · Сегодня 09:52 · /Users/runner/Movies/YTLoader
+       
+       
+       
+         
+     
+     Показать в Finder
+     Скачать сноваОчист
+SELFTEST snapshot 04-settings
+SELFTEST OK
