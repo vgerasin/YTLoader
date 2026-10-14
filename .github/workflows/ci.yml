@@ -50,6 +50,29 @@ jobs:
           set -o pipefail
           swift test 2>&1 | tee test.log
 
+      - name: Launch the real app (self-test)
+        if: always()
+        continue-on-error: true
+        working-directory: host
+        env:
+          YTLOADER_SELFTEST: "1"
+          YTLOADER_UI: ${{ github.workspace }}/app/Resources/ui.html
+          YTLOADER_HOME: ${{ runner.temp }}/ytl-home
+          YTLOADER_SELFTEST_OUT: ${{ github.workspace }}/host/selftest
+          YTLOADER_SELFTEST_URL: http://127.0.0.1:8765/sample.mp4
+        run: |
+          mkdir -p "$YTLOADER_HOME" "$YTLOADER_SELFTEST_OUT"
+          echo '{"onboarded":true,"autoUpdate":false,"language":"ru","theme":"light","speedLimit":"200K","cookieBrowser":"none"}' > "$YTLOADER_HOME/settings.json"
+          (cd Tests/YTLoaderCoreTests/Fixtures && nohup python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          sleep 1
+          BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
+          "$BIN/YTLoader" > selftest.log 2>&1 &
+          PID=$!
+          for i in $(seq 1 170); do kill -0 $PID 2>/dev/null || break; sleep 1; done
+          kill $PID 2>/dev/null || true
+          cat selftest.log
+          grep -q "SELFTEST OK" selftest.log
+
       - name: Publish logs
         if: always()
         run: |
@@ -61,7 +84,8 @@ jobs:
           fi
           cd /tmp/logrepo
           rm -rf latest && mkdir latest
-          for f in build test tools swift-version; do cp "$GITHUB_WORKSPACE/host/$f.log" latest/ 2>/dev/null; done
+          for f in build test tools swift-version selftest; do cp "$GITHUB_WORKSPACE/host/$f.log" latest/ 2>/dev/null; done
+          cp "$GITHUB_WORKSPACE"/host/selftest/*.png latest/ 2>/dev/null
           echo "${{ github.sha }} ${{ github.ref_name }} $(date -u +%FT%TZ)" > latest/info.txt
           git config user.name ci && git config user.email ci@example.invalid
           git add -A && git commit -q -m "logs for ${{ github.sha }}" && git push -q origin ci-logs

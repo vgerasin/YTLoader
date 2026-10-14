@@ -30,6 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     var statusBar: StatusBarController?
     var dock = DockController()
     var notificationsAsked = false
+    var forceDeliver = false
+    var selfTest: SelfTest?
 
     // MARK: - запуск
 
@@ -49,6 +51,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         let urls = queuedURLs
         queuedURLs = []
         for u in urls { handle(url: u) }
+
+        if ProcessInfo.processInfo.environment["YTLOADER_SELFTEST"] == "1" {
+            forceDeliver = true
+            selfTest = SelfTest(app: self)
+            selfTest?.start()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -182,7 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     }
 
     var windowShowsContent: Bool {
-        window.isVisible && !window.isMiniaturized && window.occlusionState.contains(.visible)
+        forceDeliver || window.isVisible && !window.isMiniaturized && window.occlusionState.contains(.visible)
     }
 
     func flushPending() {

@@ -11,7 +11,7 @@ public enum AppPaths {
     }
 
     /// Для тестов: хранить всё в другом каталоге.
-    public static var overrideRoot: URL?
+    public static var overrideRoot: URL? = ProcessInfo.processInfo.environment["YTLOADER_HOME"].map { URL(fileURLWithPath: $0) }
 
     /// ~/Library/Application Support/YTLoader
     public static var appSupport: URL {
