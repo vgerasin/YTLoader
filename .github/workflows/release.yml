@@ -92,7 +92,7 @@ jobs:
           SHA_INTEL="$(shasum -a 256 "$INTEL" | cut -d' ' -f1)"
           cat > notes.md <<NOTES
           **YTLoader-$VERSION.dmg** — универсальный образ: Apple Silicon (M1 и новее) и Intel, macOS 12 и новее.
-          **YTLoader-$VERSION-intel.dmg** — то же приложение только для Intel-маков (вдвое меньше).
+          **YTLoader-$VERSION-intel.dmg** — то же приложение только для Intel-маков.
 
           Приложение подписано без аккаунта разработчика: при первом запуске нажмите правой кнопкой → «Открыть».
 
@@ -102,6 +102,7 @@ jobs:
           NOTES
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$UNI" "$INTEL" --clobber
+            gh release edit "$TAG" --notes-file notes.md
           else
             gh release create "$TAG" "$UNI" "$INTEL" \
               --title "YTLoader $VERSION" --notes-file notes.md --target "$GITHUB_SHA"
