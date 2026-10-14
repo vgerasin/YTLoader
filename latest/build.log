@@ -1,0 +1,87 @@
+0%: Compute target dependency graph
+Building targets in dependency order
+Target dependency graph (3 targets)
+0%: Gather provisioning inputs
+0%: Create build description
+0%: Discovering version info for swiftc
+0%: Discovering version info for clang
+0%: Discovering version info for ld
+Build description signature: 7ecf5ed8f4d6070c7a0ab4bb5d216d61
+
+Build description path: /Users/runner/work/YTLoader/YTLoader/host/.build/apple/Intermediates.noindex/XCBuildData/7ecf5ed8f4d6070c7a0ab4bb5d216d61.xcbuilddata
+
+0%: Create build directory $(TARGET_BUILD_DIR)
+0%: Create build directory $(OBJROOT)
+0%: Build stat cache for /Applications/Xcode_15.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk
+0%: Create build directory $(TARGET_BUILD_DIR)/Release
+0%: Create build directory $(OBJROOT)/EagerLinkingTBDs/Release
+0%: Create build directory $(TARGET_BUILD_DIR)/Release/PackageFrameworks
+0%: Write YTLoaderCore.modulemap
+0%: Copy YTLoaderCore.modulemap
+0%: Write YTLoaderCore.o.LinkFileList (x86_64)
+0%: Write YTLoaderCore.o.LinkFileList (arm64)
+0%: Write YTLoaderCore_const_extract_protocols.json (x86_64)
+0%: Write YTLoaderCore.o.SwiftFileList (x86_64)
+0%: Write YTLoaderCore-OutputFileMap.json (x86_64)
+0%: Write YTLoaderCore_const_extract_protocols.json (arm64)
+0%: Write YTLoaderCore.o.SwiftFileList (arm64)
+0%: Write YTLoaderCore-OutputFileMap.json (arm64)
+27%: Planning Swift module YTLoaderCore (x86_64)
+27%: Planning Swift module YTLoaderCore (arm64)
+27%: Compile YTLoaderCore.o (arm64)
+27%: Compile YTLoaderCore.o (x86_64)
+27%: Compiling ArgsBuilder.swift, Components.swift, Engine+Actions.swift, Engine+Jobs.swift, Engine.swift, ErrorClassifier.swift, Loc.swift, Models.swift, Paths.swift, ProgressParser.swift, Settings.swift, Sites.swift, Store.swift, Util.swift
+27%: Compiling ArgsBuilder.swift, Components.swift, Engine+Actions.swift, Engine+Jobs.swift, Engine.swift, ErrorClassifier.swift, Loc.swift, Models.swift, Paths.swift, ProgressParser.swift, Settings.swift, Sites.swift, Store.swift, Util.swift
+27%: Compile 14 Swift source files (arm64)
+27%: Compile 14 Swift source files (x86_64)
+35%: Discovering Swift tasks after 'Compiling ArgsBuilder.swift, Components.swift, Engine+Actions.swift, Engine+Jobs.swift, Engine.swift, ErrorClassifier.swift, Loc.swift, Models.swift, Paths.swift, ProgressParser.swift, Settings.swift, Sites.swift, Store.swift, Util.swift'
+35%: Discovering Swift tasks after 'Compiling ArgsBuilder.swift, Components.swift, Engine+Actions.swift, Engine+Jobs.swift, Engine.swift, ErrorClassifier.swift, Loc.swift, Models.swift, Paths.swift, ProgressParser.swift, Settings.swift, Sites.swift, Store.swift, Util.swift'
+35%: Unblock downstream dependents of YTLoaderCore.o (x86_64)
+35%: Unblock downstream dependents of YTLoaderCore.o (arm64)
+35%: Merge Objective-C generated interface headers
+35%: Copy YTLoaderCore.swiftdoc (x86_64)
+35%: Copy YTLoaderCore.swiftmodule (x86_64)
+35%: Copy YTLoaderCore.abi.json (x86_64)
+35%: Copy YTLoaderCore.swiftmodule (arm64)
+35%: Copy YTLoaderCore.swiftdoc (arm64)
+35%: Copy YTLoaderCore.abi.json (arm64)
+35%: Copy YTLoaderCore.swiftsourceinfo (x86_64)
+35%: Copy YTLoaderCore.swiftsourceinfo (arm64)
+35%: Link YTLoaderCore.o (x86_64)
+35%: Link YTLoaderCore.o (arm64)
+35%: Write YTLoader_const_extract_protocols.json (x86_64)
+35%: Write YTLoader.SwiftFileList (x86_64)
+35%: Write YTLoader-OutputFileMap.json (x86_64)
+35%: Write YTLoader_const_extract_protocols.json (arm64)
+35%: Write YTLoader.SwiftFileList (arm64)
+35%: Planning Swift module YTLoader (x86_64)
+35%: Write YTLoader-OutputFileMap.json (arm64)
+35%: Compiling main.swift
+65%: Planning Swift module YTLoader (arm64)
+65%: Compile YTLoader (x86_64)
+65%: Create universal binary YTLoaderCore.o
+65%: Compile YTLoader (arm64)
+65%: Compiling main.swift
+65%: Compile main.swift (x86_64)
+65%: Register execution policy exception for YTLoaderCore.o
+65%: Compile main.swift (arm64)
+73%: Discovering Swift tasks after 'Compiling main.swift'
+73%: Unblock downstream dependents of YTLoader (arm64)
+73%: Copy YTLoader.swiftdoc (arm64)
+73%: Copy YTLoader.swiftmodule (arm64)
+73%: Copy YTLoader.abi.json (arm64)
+73%: Copy YTLoader.swiftsourceinfo (arm64)
+73%: Write YTLoader.LinkFileList (x86_64)
+73%: Write YTLoader.LinkFileList (arm64)
+73%: Link YTLoader (arm64)
+73%: Discovering Swift tasks after 'Compiling main.swift'
+73%: Unblock downstream dependents of YTLoader (x86_64)
+73%: Link YTLoader (x86_64)
+73%: Copy YTLoader.swiftmodule (x86_64)
+73%: Copy YTLoader.swiftdoc (x86_64)
+91%: Copy YTLoader.abi.json (x86_64)
+91%: Copy YTLoader.swiftsourceinfo (x86_64)
+95%: Create universal binary YTLoader
+95%: Generate YTLoader.dSYM
+98%: Register execution policy exception for YTLoader
+100%: Build succeeded
