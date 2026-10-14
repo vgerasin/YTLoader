@@ -6,12 +6,12 @@ Target dependency graph (3 targets)
 0%: Discovering version info for swiftc
 0%: Discovering version info for clang
 0%: Discovering version info for ld
-Build description signature: 006d073d5df87e41bc835f61b94433b3
+Build description signature: 6d75472c42c5802b77f4095eb182b08c
 
-Build description path: /Users/runner/work/YTLoader/YTLoader/host/.build/apple/Intermediates.noindex/XCBuildData/006d073d5df87e41bc835f61b94433b3.xcbuilddata
+Build description path: /Users/runner/work/YTLoader/YTLoader/host/.build/apple/Intermediates.noindex/XCBuildData/6d75472c42c5802b77f4095eb182b08c.xcbuilddata
 
-0%: Create build directory $(TARGET_BUILD_DIR)
 0%: Create build directory $(OBJROOT)
+0%: Create build directory $(TARGET_BUILD_DIR)
 0%: Build stat cache for /Applications/Xcode_15.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk
 0%: Create build directory $(TARGET_BUILD_DIR)/Release
 0%: Create build directory $(OBJROOT)/EagerLinkingTBDs/Release
@@ -26,8 +26,8 @@ Build description path: /Users/runner/work/YTLoader/YTLoader/host/.build/apple/I
 0%: Write YTLoaderCore_const_extract_protocols.json (arm64)
 0%: Write YTLoaderCore.o.SwiftFileList (arm64)
 0%: Write YTLoaderCore-OutputFileMap.json (arm64)
-27%: Planning Swift module YTLoaderCore (arm64)
 27%: Planning Swift module YTLoaderCore (x86_64)
+27%: Planning Swift module YTLoaderCore (arm64)
 27%: Compile YTLoaderCore.o (x86_64)
 27%: Compile YTLoaderCore.o (arm64)
 27%: Compiling ArgsBuilder.swift, Components.swift, Engine+Actions.swift, Engine+Jobs.swift, Engine.swift, ErrorClassifier.swift, Loc.swift, Models.swift, Paths.swift, ProgressParser.swift, Settings.swift, Sites.swift, Store.swift, Util.swift
@@ -36,14 +36,14 @@ Build description path: /Users/runner/work/YTLoader/YTLoader/host/.build/apple/I
 27%: Compile 14 Swift source files (arm64)
 35%: Discovering Swift tasks after 'Compiling ArgsBuilder.swift, Components.swift, Engine+Actions.swift, Engine+Jobs.swift, Engine.swift, ErrorClassifier.swift, Loc.swift, Models.swift, Paths.swift, ProgressParser.swift, Settings.swift, Sites.swift, Store.swift, Util.swift'
 35%: Unblock downstream dependents of YTLoaderCore.o (arm64)
-35%: Copy YTLoaderCore.swiftdoc (arm64)
 35%: Copy YTLoaderCore.swiftmodule (arm64)
+35%: Copy YTLoaderCore.swiftdoc (arm64)
 35%: Copy YTLoaderCore.abi.json (arm64)
 35%: Copy YTLoaderCore.swiftsourceinfo (arm64)
 43%: Discovering Swift tasks after 'Compiling ArgsBuilder.swift, Components.swift, Engine+Actions.swift, Engine+Jobs.swift, Engine.swift, ErrorClassifier.swift, Loc.swift, Models.swift, Paths.swift, ProgressParser.swift, Settings.swift, Sites.swift, Store.swift, Util.swift'
 43%: Unblock downstream dependents of YTLoaderCore.o (x86_64)
-43%: Copy YTLoaderCore.swiftmodule (x86_64)
 43%: Merge Objective-C generated interface headers
+43%: Copy YTLoaderCore.swiftmodule (x86_64)
 43%: Copy YTLoaderCore.swiftdoc (x86_64)
 43%: Copy YTLoaderCore.abi.json (x86_64)
 43%: Copy YTLoaderCore.swiftsourceinfo (x86_64)
@@ -53,34 +53,34 @@ Build description path: /Users/runner/work/YTLoader/YTLoader/host/.build/apple/I
 43%: Write YTLoader.SwiftFileList (x86_64)
 43%: Write YTLoader-OutputFileMap.json (x86_64)
 43%: Write YTLoader_const_extract_protocols.json (arm64)
-43%: Planning Swift module YTLoader (x86_64)
 43%: Write YTLoader.SwiftFileList (arm64)
 43%: Write YTLoader-OutputFileMap.json (arm64)
-43%: Compiling AppDelegate.swift, DockController.swift, SelfTest.swift, StatusBarController.swift, main.swift
+43%: Planning Swift module YTLoader (x86_64)
 43%: Planning Swift module YTLoader (arm64)
-43%: Compile YTLoader (x86_64)
-43%: Create universal binary YTLoaderCore.o
-43%: Compile YTLoader (arm64)
 43%: Compiling AppDelegate.swift, DockController.swift, SelfTest.swift, StatusBarController.swift, main.swift
-43%: Register execution policy exception for YTLoaderCore.o
-43%: Compile 5 Swift source files (x86_64)
-43%: Compile 5 Swift source files (arm64)
-73%: Discovering Swift tasks after 'Compiling AppDelegate.swift, DockController.swift, SelfTest.swift, StatusBarController.swift, main.swift'
-73%: Unblock downstream dependents of YTLoader (arm64)
-73%: Write YTLoader.LinkFileList (x86_64)
-73%: Write YTLoader.LinkFileList (arm64)
-73%: Link YTLoader (arm64)
-73%: Copy YTLoader.swiftmodule (arm64)
-73%: Copy YTLoader.swiftdoc (arm64)
-73%: Copy YTLoader.abi.json (arm64)
-73%: Copy YTLoader.swiftsourceinfo (arm64)
-73%: Discovering Swift tasks after 'Compiling AppDelegate.swift, DockController.swift, SelfTest.swift, StatusBarController.swift, main.swift'
-73%: Unblock downstream dependents of YTLoader (x86_64)
-73%: Copy YTLoader.swiftmodule (x86_64)
-73%: Link YTLoader (x86_64)
-73%: Copy YTLoader.swiftdoc (x86_64)
-73%: Copy YTLoader.abi.json (x86_64)
-73%: Copy YTLoader.swiftsourceinfo (x86_64)
+66%: Compiling AppDelegate.swift, DockController.swift, SelfTest.swift, StatusBarController.swift, main.swift
+66%: Compile YTLoader (x86_64)
+66%: Compile 5 Swift source files (x86_64)
+66%: Compile 5 Swift source files (arm64)
+69%: Create universal binary YTLoaderCore.o
+69%: Discovering Swift tasks after 'Compiling AppDelegate.swift, DockController.swift, SelfTest.swift, StatusBarController.swift, main.swift'
+69%: Compile YTLoader (arm64)
+69%: Unblock downstream dependents of YTLoader (arm64)
+69%: Copy YTLoader.swiftmodule (arm64)
+69%: Copy YTLoader.swiftdoc (arm64)
+69%: Copy YTLoader.abi.json (arm64)
+69%: Copy YTLoader.swiftsourceinfo (arm64)
+69%: Discovering Swift tasks after 'Compiling AppDelegate.swift, DockController.swift, SelfTest.swift, StatusBarController.swift, main.swift'
+69%: Unblock downstream dependents of YTLoader (x86_64)
+69%: Register execution policy exception for YTLoaderCore.o
+69%: Copy YTLoader.swiftmodule (x86_64)
+69%: Copy YTLoader.swiftdoc (x86_64)
+69%: Copy YTLoader.abi.json (x86_64)
+69%: Copy YTLoader.swiftsourceinfo (x86_64)
+69%: Write YTLoader.LinkFileList (arm64)
+69%: Write YTLoader.LinkFileList (x86_64)
+69%: Link YTLoader (arm64)
+69%: Link YTLoader (x86_64)
 95%: Create universal binary YTLoader
 95%: Generate YTLoader.dSYM
 98%: Register execution policy exception for YTLoader
