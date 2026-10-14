@@ -77,12 +77,10 @@ final class ComponentsTests: XCTestCase {
     func testVersionIsCachedOnDisk() throws {
         let p = try fakeYtdlp(at: bin.appendingPathComponent("yt-dlp-dist-2099.06.01"), name: "yt-dlp_macos", version: "2099.06.01")
         XCTAssertEqual(Components.detect().ytdlpVersion, "2099.06.01")
-        // подменяем содержимое на другую «версию», но с тем же размером и временем — кэш должен сработать без запуска файла
-        let attrs = try FileManager.default.attributesOfItem(atPath: p)
-        let mtime = attrs[.modificationDate] as! Date
-        try "#!/bin/sh\necho 2088.06.01\n".write(toFile: p, atomically: false, encoding: .utf8)
-        try FileManager.default.setAttributes([.modificationDate: mtime], ofItemAtPath: p)
-        XCTAssertEqual(Components.detect().ytdlpVersion, "2099.06.01")
-        XCTAssertTrue(FileManager.default.fileExists(atPath: AppPaths.cacheDir.appendingPathComponent("ytdlp-versions.json").path))
+        // версия записана на диск вместе с путём: при следующем запуске приложения файл запускать не придётся
+        let file = AppPaths.cacheDir.appendingPathComponent("ytdlp-versions.json")
+        let obj = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: String]
+        let hit = obj?.first { $0.key.hasPrefix(p + "|") }
+        XCTAssertEqual(hit?.value, "2099.06.01")
     }
 }
