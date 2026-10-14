@@ -1,13 +1,13 @@
 warning: 'host': found 10 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
     /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_1_003.ts
+    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_0.m3u8
+    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_1_002.ts
+    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/master.m3u8
+    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_0_000.ts
     /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_1_004.ts
     /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/sample.mp4
-    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/master.m3u8
     /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_1_000.ts
-    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_1_002.ts
     /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_1.m3u8
-    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_0.m3u8
-    /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_0_000.ts
     /Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/Fixtures/hls/stream_1_001.ts
 Building for debugging...
 [0/10] Write sources
@@ -29,39 +29,40 @@ Building for debugging...
 [19/26] Compiling YTLoaderCore Engine+Actions.swift
 [20/26] Compiling YTLoaderCore Engine+Jobs.swift
 [21/26] Compiling YTLoaderCore Engine.swift
-[22/37] Compiling YTLoaderCoreTests ArgsTests.swift
-[23/37] Compiling YTLoaderCoreTests E2ETests.swift
-[24/37] Emitting module YTLoader
-[25/37] Compiling YTLoaderCoreTests ModelTests.swift
-[26/37] Compiling YTLoaderCoreTests PreviewTests.swift
-[27/38] Compiling YTLoader main.swift
-[27/38] Write Objects.LinkFileList
-[28/38] Linking YTLoader
-[29/38] Applying YTLoader
-[31/38] Emitting module YTLoaderCoreTests
-[33/38] Compiling YTLoaderCoreTests ProcessTests.swift
-[34/40] Compiling YTLoaderCoreTests ProgressTests.swift
-[35/40] Compiling YTLoaderCoreTests SitesTests.swift
-[38/40] Write Objects.LinkFileList
-[39/40] Linking YTLoaderPackageTests
-Build complete! (15.12s)
-Test Suite 'All tests' started at 2026-10-14 12:57:17.597.
-Test Suite 'YTLoaderPackageTests.xctest' started at 2026-10-14 12:57:17.599.
-Test Suite 'ArgsTests' started at 2026-10-14 12:57:17.599.
+[22/38] Compiling YTLoader SelfTest.swift
+[23/38] Compiling YTLoaderCoreTests ArgsTests.swift
+[24/38] Emitting module YTLoader
+[25/38] Compiling YTLoader AppDelegate.swift
+[26/38] Compiling YTLoader DockController.swift
+[27/39] Compiling YTLoader main.swift
+[27/39] Write Objects.LinkFileList
+[28/39] Linking YTLoader
+[29/39] Applying YTLoader
+[34/41] Compiling YTLoaderCoreTests ProgressTests.swift
+[35/41] Compiling YTLoaderCoreTests SitesTests.swift
+[36/41] Emitting module YTLoaderCoreTests
+[38/41] Compiling YTLoaderCoreTests ComponentsTests.swift
+[39/41] Compiling YTLoaderCoreTests E2ETests.swift
+[39/41] Write Objects.LinkFileList
+[40/41] Linking YTLoaderPackageTests
+Build complete! (12.27s)
+Test Suite 'All tests' started at 2026-10-14 13:17:21.905.
+Test Suite 'YTLoaderPackageTests.xctest' started at 2026-10-14 13:17:21.906.
+Test Suite 'ArgsTests' started at 2026-10-14 13:17:21.906.
 Test Case '-[YTLoaderCoreTests.ArgsTests testAudioAndNoFFmpeg]' started.
-Test Case '-[YTLoaderCoreTests.ArgsTests testAudioAndNoFFmpeg]' passed (0.004 seconds).
+Test Case '-[YTLoaderCoreTests.ArgsTests testAudioAndNoFFmpeg]' passed (0.002 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testCookiesAndOrganize]' started.
-Test Case '-[YTLoaderCoreTests.ArgsTests testCookiesAndOrganize]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.ArgsTests testCookiesAndOrganize]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testDownloadArgsVideo]' started.
 Test Case '-[YTLoaderCoreTests.ArgsTests testDownloadArgsVideo]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testFallbackClientsAfterForbidden]' started.
-Test Case '-[YTLoaderCoreTests.ArgsTests testFallbackClientsAfterForbidden]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.ArgsTests testFallbackClientsAfterForbidden]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testFormatSelector]' started.
 Test Case '-[YTLoaderCoreTests.ArgsTests testFormatSelector]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testResolveArgsSingleVideoInPlaylistLink]' started.
-Test Case '-[YTLoaderCoreTests.ArgsTests testResolveArgsSingleVideoInPlaylistLink]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.ArgsTests testResolveArgsSingleVideoInPlaylistLink]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testSavedInfoReplacesURL]' started.
-Test Case '-[YTLoaderCoreTests.ArgsTests testSavedInfoReplacesURL]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.ArgsTests testSavedInfoReplacesURL]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testSectionArg]' started.
 Test Case '-[YTLoaderCoreTests.ArgsTests testSectionArg]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testSponsorBlockOnlyForYouTube]' started.
@@ -72,52 +73,68 @@ Test Case '-[YTLoaderCoreTests.ArgsTests testYouTubeArgsAvoidHLSButOtherSitesDoN
 Test Case '-[YTLoaderCoreTests.ArgsTests testYouTubeArgsAvoidHLSButOtherSitesDoNot]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ArgsTests testYouTubeSelectorPrefersPlainHTTPSOverHLS]' started.
 Test Case '-[YTLoaderCoreTests.ArgsTests testYouTubeSelectorPrefersPlainHTTPSOverHLS]' passed (0.000 seconds).
-Test Suite 'ArgsTests' passed at 2026-10-14 12:57:17.609.
-	 Executed 12 tests, with 0 failures (0 unexpected) in 0.009 (0.010) seconds
-Test Suite 'E2ETests' started at 2026-10-14 12:57:17.610.
+Test Suite 'ArgsTests' passed at 2026-10-14 13:17:21.911.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+Test Suite 'ComponentsTests' started at 2026-10-14 13:17:21.911.
+Test Case '-[YTLoaderCoreTests.ComponentsTests testDetectPrefersNewestUnpackedBuild]' started.
+Test Case '-[YTLoaderCoreTests.ComponentsTests testDetectPrefersNewestUnpackedBuild]' passed (0.368 seconds).
+Test Case '-[YTLoaderCoreTests.ComponentsTests testEqualVersionPrefersUnpackedOverSingleFile]' started.
+Test Case '-[YTLoaderCoreTests.ComponentsTests testEqualVersionPrefersUnpackedOverSingleFile]' passed (0.102 seconds).
+Test Case '-[YTLoaderCoreTests.ComponentsTests testMigrationConditions]' started.
+Test Case '-[YTLoaderCoreTests.ComponentsTests testMigrationConditions]' passed (0.003 seconds).
+Test Case '-[YTLoaderCoreTests.ComponentsTests testPruneDoesNothingWhenWorkingWithSingleFile]' started.
+Test Case '-[YTLoaderCoreTests.ComponentsTests testPruneDoesNothingWhenWorkingWithSingleFile]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.ComponentsTests testPruneKeepsOnlyCurrentAndRemovesSingleFile]' started.
+Test Case '-[YTLoaderCoreTests.ComponentsTests testPruneKeepsOnlyCurrentAndRemovesSingleFile]' passed (0.003 seconds).
+Test Case '-[YTLoaderCoreTests.ComponentsTests testVersionIsCachedOnDisk]' started.
+/Users/runner/work/YTLoader/YTLoader/host/Tests/YTLoaderCoreTests/ComponentsTests.swift:85: error: -[YTLoaderCoreTests.ComponentsTests testVersionIsCachedOnDisk] : XCTAssertEqual failed: ("2088.06.01") is not equal to ("2099.06.01")
+Test Case '-[YTLoaderCoreTests.ComponentsTests testVersionIsCachedOnDisk]' failed (0.145 seconds).
+Test Suite 'ComponentsTests' failed at 2026-10-14 13:17:22.533.
+	 Executed 6 tests, with 1 failure (0 unexpected) in 0.621 (0.621) seconds
+Test Suite 'E2ETests' started at 2026-10-14 13:17:22.533.
 Test Case '-[YTLoaderCoreTests.E2ETests testAudioOnlyProducesMP3]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testAudioOnlyProducesMP3]' passed (2.982 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testAudioOnlyProducesMP3]' passed (1.997 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testCancelLeavesNoTraceInDownloads]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testCancelLeavesNoTraceInDownloads]' passed (2.483 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testCancelLeavesNoTraceInDownloads]' passed (1.930 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testDeferredAfterResolve]' started.
 Test Case '-[YTLoaderCoreTests.E2ETests testDeferredAfterResolve]' passed (0.001 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testDownloadReusesResolvedInfo]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testDownloadReusesResolvedInfo]' passed (2.388 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testDownloadReusesResolvedInfo]' passed (2.398 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testHLSTwoStreamsMergeNeedsFFmpeg]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testHLSTwoStreamsMergeNeedsFFmpeg]' passed (2.354 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testHLSTwoStreamsMergeNeedsFFmpeg]' passed (2.327 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testMissingFileBecomesFriendlyError]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testMissingFileBecomesFriendlyError]' passed (1.971 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testMissingFileBecomesFriendlyError]' passed (1.894 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testPauseResumeAndCancel]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testPauseResumeAndCancel]' passed (3.973 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testPauseResumeAndCancel]' passed (3.944 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testPlainFileDownloadWithProgressAndDuplicates]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testPlainFileDownloadWithProgressAndDuplicates]' passed (4.796 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testPlainFileDownloadWithProgressAndDuplicates]' passed (4.791 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testPlaylistExpansion]' started.
 Test Case '-[YTLoaderCoreTests.E2ETests testPlaylistExpansion]' passed (0.001 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testProgressIsLiveWhileDownloading]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testProgressIsLiveWhileDownloading]' passed (7.175 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testProgressIsLiveWhileDownloading]' passed (7.206 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testSavedInfoIsUsedOnlyWhenFresh]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testSavedInfoIsUsedOnlyWhenFresh]' passed (0.003 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testSavedInfoIsUsedOnlyWhenFresh]' passed (0.001 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testSectionCut]' started.
-Test Case '-[YTLoaderCoreTests.E2ETests testSectionCut]' passed (2.396 seconds).
+Test Case '-[YTLoaderCoreTests.E2ETests testSectionCut]' passed (2.564 seconds).
 Test Case '-[YTLoaderCoreTests.E2ETests testSingleResolvedVideoFillsStreams]' started.
 Test Case '-[YTLoaderCoreTests.E2ETests testSingleResolvedVideoFillsStreams]' passed (0.000 seconds).
-Test Suite 'E2ETests' passed at 2026-10-14 12:57:49.655.
-	 Executed 13 tests, with 0 failures (0 unexpected) in 30.523 (32.046) seconds
-Test Suite 'ModelTests' started at 2026-10-14 12:57:49.655.
+Test Suite 'E2ETests' passed at 2026-10-14 13:17:53.172.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 29.056 (30.639) seconds
+Test Suite 'ModelTests' started at 2026-10-14 13:17:53.172.
 Test Case '-[YTLoaderCoreTests.ModelTests testClassifyUsesLanguage]' started.
 Test Case '-[YTLoaderCoreTests.ModelTests testClassifyUsesLanguage]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testDefaultCodecIsH264ForQuickTime]' started.
-Test Case '-[YTLoaderCoreTests.ModelTests testDefaultCodecIsH264ForQuickTime]' passed (0.002 seconds).
+Test Case '-[YTLoaderCoreTests.ModelTests testDefaultCodecIsH264ForQuickTime]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testErrorClassification]' started.
-Test Case '-[YTLoaderCoreTests.ModelTests testErrorClassification]' passed (0.002 seconds).
+Test Case '-[YTLoaderCoreTests.ModelTests testErrorClassification]' passed (0.001 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testEveryErrorKindHasText]' started.
 Test Case '-[YTLoaderCoreTests.ModelTests testEveryErrorKindHasText]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testItemUIJSONShapeAndRoundTrip]' started.
-Test Case '-[YTLoaderCoreTests.ModelTests testItemUIJSONShapeAndRoundTrip]' passed (0.003 seconds).
+Test Case '-[YTLoaderCoreTests.ModelTests testItemUIJSONShapeAndRoundTrip]' passed (0.001 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testLocResolve]' started.
-Test Case '-[YTLoaderCoreTests.ModelTests testLocResolve]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.ModelTests testLocResolve]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testNextOccurrence]' started.
-Test Case '-[YTLoaderCoreTests.ModelTests testNextOccurrence]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.ModelTests testNextOccurrence]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testSettingsDecodeIsTolerant]' started.
 Test Case '-[YTLoaderCoreTests.ModelTests testSettingsDecodeIsTolerant]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testSettingsPatch]' started.
@@ -128,29 +145,29 @@ Test Case '-[YTLoaderCoreTests.ModelTests testStoreSkipsBrokenItems]' started.
 Test Case '-[YTLoaderCoreTests.ModelTests testStoreSkipsBrokenItems]' passed (0.001 seconds).
 Test Case '-[YTLoaderCoreTests.ModelTests testVersionCompare]' started.
 Test Case '-[YTLoaderCoreTests.ModelTests testVersionCompare]' passed (0.000 seconds).
-Test Suite 'ModelTests' passed at 2026-10-14 12:57:49.666.
-	 Executed 12 tests, with 0 failures (0 unexpected) in 0.010 (0.010) seconds
-Test Suite 'PreviewTests' started at 2026-10-14 12:57:49.666.
+Test Suite 'ModelTests' passed at 2026-10-14 13:17:53.176.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'PreviewTests' started at 2026-10-14 13:17:53.176.
 Test Case '-[YTLoaderCoreTests.PreviewTests testNoOembedForCollectionsAndOtherSites]' started.
 Test Case '-[YTLoaderCoreTests.PreviewTests testNoOembedForCollectionsAndOtherSites]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.PreviewTests testOembedForSingleVideos]' started.
-Test Case '-[YTLoaderCoreTests.PreviewTests testOembedForSingleVideos]' passed (0.001 seconds).
+Test Case '-[YTLoaderCoreTests.PreviewTests testOembedForSingleVideos]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.PreviewTests testParseKeepsVimeoThumbnail]' started.
 Test Case '-[YTLoaderCoreTests.PreviewTests testParseKeepsVimeoThumbnail]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.PreviewTests testParseRejectsGarbage]' started.
 Test Case '-[YTLoaderCoreTests.PreviewTests testParseRejectsGarbage]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.PreviewTests testParseYouTubeAnswer]' started.
 Test Case '-[YTLoaderCoreTests.PreviewTests testParseYouTubeAnswer]' passed (0.000 seconds).
-Test Suite 'PreviewTests' passed at 2026-10-14 12:57:49.668.
-	 Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
-Test Suite 'ProcessTests' started at 2026-10-14 12:57:49.668.
+Test Suite 'PreviewTests' passed at 2026-10-14 13:17:53.178.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ProcessTests' started at 2026-10-14 13:17:53.178.
 Test Case '-[YTLoaderCoreTests.ProcessTests testCarriageReturnsAndSplitLines]' started.
 Test Case '-[YTLoaderCoreTests.ProcessTests testCarriageReturnsAndSplitLines]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ProcessTests testRunningProcessDeliversLinesAsTheyArrive]' started.
-Test Case '-[YTLoaderCoreTests.ProcessTests testRunningProcessDeliversLinesAsTheyArrive]' passed (2.021 seconds).
-Test Suite 'ProcessTests' passed at 2026-10-14 12:57:51.690.
-	 Executed 2 tests, with 0 failures (0 unexpected) in 2.021 (2.021) seconds
-Test Suite 'ProgressTests' started at 2026-10-14 12:57:51.690.
+Test Case '-[YTLoaderCoreTests.ProcessTests testRunningProcessDeliversLinesAsTheyArrive]' passed (2.035 seconds).
+Test Suite 'ProcessTests' passed at 2026-10-14 13:17:55.213.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 2.035 (2.035) seconds
+Test Suite 'ProgressTests' started at 2026-10-14 13:17:55.213.
 Test Case '-[YTLoaderCoreTests.ProgressTests testAudioKindAndFragments]' started.
 Test Case '-[YTLoaderCoreTests.ProgressTests testAudioKindAndFragments]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ProgressTests testDownloadedBytesDroppingDoesNotFinishTheStream]' started.
@@ -175,9 +192,9 @@ Test Case '-[YTLoaderCoreTests.ProgressTests testTrackerTwoStreams]' started.
 Test Case '-[YTLoaderCoreTests.ProgressTests testTrackerTwoStreams]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.ProgressTests testTrackerUnknownStreamsGrowDynamically]' started.
 Test Case '-[YTLoaderCoreTests.ProgressTests testTrackerUnknownStreamsGrowDynamically]' passed (0.000 seconds).
-Test Suite 'ProgressTests' passed at 2026-10-14 12:57:51.692.
-	 Executed 12 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
-Test Suite 'SitesTests' started at 2026-10-14 12:57:51.692.
+Test Suite 'ProgressTests' passed at 2026-10-14 13:17:55.214.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'SitesTests' started at 2026-10-14 13:17:55.214.
 Test Case '-[YTLoaderCoreTests.SitesTests testCollections]' started.
 Test Case '-[YTLoaderCoreTests.SitesTests testCollections]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.SitesTests testExtractURLsFromMessyText]' started.
@@ -190,9 +207,9 @@ Test Case '-[YTLoaderCoreTests.SitesTests testNoLinks]' started.
 Test Case '-[YTLoaderCoreTests.SitesTests testNoLinks]' passed (0.000 seconds).
 Test Case '-[YTLoaderCoreTests.SitesTests testVideoKeyUnifiesLinks]' started.
 Test Case '-[YTLoaderCoreTests.SitesTests testVideoKeyUnifiesLinks]' passed (0.000 seconds).
-Test Suite 'SitesTests' passed at 2026-10-14 12:57:51.693.
-	 Executed 6 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
-Test Suite 'YTLoaderPackageTests.xctest' passed at 2026-10-14 12:57:51.693.
-	 Executed 62 tests, with 0 failures (0 unexpected) in 32.568 (34.094) seconds
-Test Suite 'All tests' passed at 2026-10-14 12:57:51.693.
-	 Executed 62 tests, with 0 failures (0 unexpected) in 32.568 (34.096) seconds
+Test Suite 'SitesTests' passed at 2026-10-14 13:17:55.216.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'YTLoaderPackageTests.xctest' failed at 2026-10-14 13:17:55.216.
+	 Executed 68 tests, with 1 failure (0 unexpected) in 31.725 (33.310) seconds
+Test Suite 'All tests' failed at 2026-10-14 13:17:55.216.
+	 Executed 68 tests, with 1 failure (0 unexpected) in 31.725 (33.311) seconds
