@@ -151,6 +151,7 @@ extension Engine {
         guard let it = item(id) else { return }
         let temp = it.tempFiles
         let tempDir = tempDirPath(for: id)
+        removeInfo(it)
         let running = jobs[id] != nil
         if let job = jobs[id] {
             job.intent = .cancel
@@ -194,6 +195,48 @@ extension Engine {
     /// но в Finder не видна.
     func tempDirPath(for id: String) -> String {
         (settings.folder as NSString).appendingPathComponent(".ytloader-tmp/" + id)
+    }
+
+    /// Результат разбора ссылки, сохранённый для загрузки. Ссылки на потоки живут часами, поэтому берём его только свежим.
+    static let infoMaxAge: TimeInterval = 20 * 60
+
+    func infoPath(for id: String) -> String {
+        AppPaths.cacheDir.appendingPathComponent("info-\(id).json").path
+    }
+
+    func saveInfo(_ it: Item, line: String) {
+        let path = infoPath(for: it.id)
+        do {
+            try Data(line.utf8).write(to: URL(fileURLWithPath: path), options: .atomic)
+            it.infoFile = path
+        } catch {
+            it.infoFile = ""
+        }
+    }
+
+    /// Путь к сохранённому разбору, если он есть и не устарел; иначе пустая строка (тогда yt-dlp разберёт страницу сам).
+    func usableInfo(_ it: Item) -> String {
+        guard !it.infoFile.isEmpty, it.fallback == 0, it.forbiddenRetries == 0 else { return "" }
+        let attrs = try? FileManager.default.attributesOfItem(atPath: it.infoFile)
+        guard let mtime = attrs?[.modificationDate] as? Date,
+              Date().timeIntervalSince(mtime) < Engine.infoMaxAge else { return "" }
+        return it.infoFile
+    }
+
+    func removeInfo(_ it: Item) {
+        try? FileManager.default.removeItem(atPath: infoPath(for: it.id))
+        it.infoFile = ""
+    }
+
+    /// Старые файлы разбора, оставшиеся после аварийного выхода.
+    static func sweepInfoFiles() {
+        let fm = FileManager.default
+        let dir = AppPaths.cacheDir
+        for name in (try? fm.contentsOfDirectory(atPath: dir.path)) ?? [] where name.hasPrefix("info-") {
+            let p = dir.appendingPathComponent(name).path
+            if let m = (try? fm.attributesOfItem(atPath: p))?[.modificationDate] as? Date,
+               Date().timeIntervalSince(m) > 3600 { try? fm.removeItem(atPath: p) }
+        }
     }
 
     func removeTempDir(_ path: String) {

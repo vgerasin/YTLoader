@@ -58,16 +58,50 @@ public enum Components {
         dirs.map { $0 + "/" + name }.filter { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    private static func version(ofYtdlp path: String) -> String? {
+    /// Версия yt-dlp хранится на диске: запуск самого yt-dlp (один упакованный файл) на холодную занимает секунды,
+    /// а при каждом старте приложения этого делать не нужно, пока сам файл не изменился.
+    private static var versionFile: URL { AppPaths.cacheDir.appendingPathComponent("ytdlp-versions.json") }
+    private static var diskLoaded = false
+
+    private static func stamp(of path: String) -> String {
         let attrs = try? FileManager.default.attributesOfItem(atPath: path)
-        let stamp = "\(path)|\((attrs?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0)|\((attrs?[.size] as? NSNumber) ?? 0)"
+        return "\(path)|\((attrs?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0)|\((attrs?[.size] as? NSNumber) ?? 0)"
+    }
+
+    private static func loadDiskCache() {   // под cacheLock
+        guard !diskLoaded else { return }
+        diskLoaded = true
+        if let data = try? Data(contentsOf: versionFile),
+           let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
+            for (k, v) in obj { versionCache[k] = v }
+        }
+    }
+
+    private static func saveDiskCache() {   // под cacheLock
+        // лишние записи (старые файлы) отсеиваем: оставляем только те, чей путь ещё существует
+        let live = versionCache.filter { FileManager.default.fileExists(atPath: String($0.key.split(separator: "|").first ?? "")) }
+        versionCache = live
+        if let data = try? JSONSerialization.data(withJSONObject: live) { try? data.write(to: versionFile, options: .atomic) }
+    }
+
+    /// Запоминает версию файла, которую мы уже узнали (например, при установке).
+    static func rememberVersion(_ v: String, ofYtdlp path: String) {
+        cacheLock.lock(); defer { cacheLock.unlock() }
+        loadDiskCache()
+        versionCache[stamp(of: path)] = v
+        saveDiskCache()
+    }
+
+    private static func version(ofYtdlp path: String) -> String? {
+        let key = stamp(of: path)
         cacheLock.lock()
-        if let v = versionCache[stamp] { cacheLock.unlock(); return v }
+        loadDiskCache()
+        if let v = versionCache[key] { cacheLock.unlock(); return v }
         cacheLock.unlock()
-        guard let out = runCapture(path, ["--version"], timeout: 25),
+        guard let out = runCapture(path, ["--version"], timeout: 40),
               let first = out.split(separator: "\n").first else { return nil }
         let v = String(first).trimmingCharacters(in: .whitespaces)
-        cacheLock.lock(); versionCache[stamp] = v; cacheLock.unlock()
+        cacheLock.lock(); versionCache[key] = v; saveDiskCache(); cacheLock.unlock()
         return v
     }
 
@@ -90,9 +124,18 @@ public enum Components {
         var t = ToolPaths()
         let dirs = searchDirs()
 
+        // копий yt-dlp может быть несколько (своя, из приложения, из Homebrew); холодный запуск каждой — секунды,
+        // поэтому спрашиваем версии одновременно
+        let candidates = executable("yt-dlp", in: dirs)
+        var versions = [String?](repeating: nil, count: candidates.count)
+        let vLock = NSLock()
+        DispatchQueue.concurrentPerform(iterations: candidates.count) { i in
+            let v = version(ofYtdlp: candidates[i])
+            vLock.lock(); versions[i] = v; vLock.unlock()
+        }
         var best: (path: String, version: String)?
-        for p in executable("yt-dlp", in: dirs) {
-            guard let v = version(ofYtdlp: p) else { continue }
+        for (i, p) in candidates.enumerated() {
+            guard let v = versions[i] else { continue }
             if best == nil || compareVersions(v, best!.version) > 0 { best = (p, v) }
         }
         if let b = best { t.ytdlp = b.path; t.ytdlpVersion = b.version }
@@ -180,12 +223,17 @@ public enum Components {
         makeExecutable(staged.path)
 
         let check: [String] = name == "ffmpeg" || name == "ffprobe" ? ["-version"] : ["--version"]
-        guard runCapture(staged.path, check, timeout: 40) != nil else {
+        let runCaptureResult = runCapture(staged.path, check, timeout: 40)
+        guard runCaptureResult != nil else {
             try? fm.removeItem(at: staged)
             throw ComponentError("\(name) does not start on this Mac")
         }
+        let installedVersion = runCaptureResult
         try? fm.removeItem(at: target)
         try fm.moveItem(at: staged, to: target)
+        if name == "yt-dlp", let v = installedVersion?.split(separator: "\n").first {
+            rememberVersion(String(v).trimmingCharacters(in: .whitespaces), ofYtdlp: target.path)
+        }
         Log.shared.write("installed \(name) → \(target.path)")
         return target.path
     }

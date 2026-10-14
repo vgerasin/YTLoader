@@ -99,6 +99,7 @@ public final class Engine {
             started = true
             if let s = Store.load(Settings.self, from: AppPaths.settingsFile) { settings = s }
             settings.sanitize()
+            Engine.sweepInfoFiles()
             history = Store.loadArray(HistoryEntry.self, from: AppPaths.historyFile)
             items = Store.loadArray(Item.self, from: AppPaths.queueFile)
             restoreQueue()

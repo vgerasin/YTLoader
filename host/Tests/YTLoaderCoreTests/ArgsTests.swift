@@ -122,6 +122,20 @@ final class ArgsTests: XCTestCase {
         XCTAssertFalse(b[b.firstIndex(of: "-f")! + 1].contains("m3u8"))
     }
 
+    func testSavedInfoReplacesURL() {
+        var spec = DownloadSpec(url: "https://www.youtube.com/watch?v=abc", audioOnly: false, quality: "1080p")
+        let plain = ArgsBuilder.downloadArgs(spec, settings: Settings(), tools: tools())
+        XCTAssertEqual(plain.last, "https://www.youtube.com/watch?v=abc")
+        XCTAssertFalse(plain.contains("--load-info-json"))
+
+        spec.infoFile = "/tmp/info-1.json"
+        let a = ArgsBuilder.downloadArgs(spec, settings: Settings(), tools: tools())
+        let i = a.firstIndex(of: "--load-info-json")
+        XCTAssertNotNil(i)
+        XCTAssertEqual(a[i! + 1], "/tmp/info-1.json")
+        XCTAssertFalse(a.contains("https://www.youtube.com/watch?v=abc"), "ссылка не нужна: страница уже разобрана")
+    }
+
     func testTempDirKeepsPartsAndThumbnailOutOfDownloads() {
         var spec = DownloadSpec(url: "https://vimeo.com/76979871", audioOnly: false, quality: "1080p")
         spec.tempDir = "/Users/me/Downloads/.ytloader-tmp/abc"

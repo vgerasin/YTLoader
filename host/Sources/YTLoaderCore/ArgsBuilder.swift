@@ -34,10 +34,12 @@ public struct DownloadSpec {
     public var printFile: String       // куда yt-dlp запишет итоговый путь
     public var tempDir: String         // где лежат недокачанные части и обложка (скрытая папка)
     public var fallback: Int           // 0 — обычные настройки, 1+ — запасные (после отказа 403)
+    /// Результат разбора ссылки (`-J`): если задан, yt-dlp не разбирает страницу заново, а берёт форматы оттуда.
+    public var infoFile: String
 
     public init(url: String, audioOnly: Bool, quality: String, sectionFrom: String = "",
                 sectionTo: String = "", noCookies: Bool = false, groupTitle: String = "",
-                printFile: String = "", tempDir: String = "", fallback: Int = 0) {
+                printFile: String = "", tempDir: String = "", fallback: Int = 0, infoFile: String = "") {
         self.url = url
         self.audioOnly = audioOnly
         self.quality = quality
@@ -48,6 +50,7 @@ public struct DownloadSpec {
         self.printFile = printFile
         self.tempDir = tempDir
         self.fallback = fallback
+        self.infoFile = infoFile
     }
 }
 
@@ -224,7 +227,12 @@ public enum ArgsBuilder {
             }
         }
 
-        a.append(spec.url)
+        if spec.infoFile.isEmpty {
+            a.append(spec.url)
+        } else {
+            // разбор страницы уже сделан при добавлении ссылки — второй раз он занимает те же секунды
+            a += ["--load-info-json", spec.infoFile]
+        }
         return a
     }
 

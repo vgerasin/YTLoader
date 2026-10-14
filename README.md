@@ -67,8 +67,8 @@
 
 ## Установка
 
-1. Скачайте **[YTLoader-5.3.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.3.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
-   Отдельный образ только для Intel: **[YTLoader-5.3-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.3-intel.dmg)**.
+1. Скачайте **[YTLoader-5.4.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.4.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
+   Отдельный образ только для Intel: **[YTLoader-5.4-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.4-intel.dmg)**.
    Контрольные суммы SHA-256 — в файле [downloads/SHA256SUMS](downloads/SHA256SUMS).
 2. Откройте DMG и перетащите YTLoader в «Программы».
 3. Первый запуск: приложение подписано без аккаунта разработчика Apple, поэтому macOS может его не открыть.
@@ -115,7 +115,7 @@ make screenshots  # обновить docs/screenshots (python3 + playwright)
 ### Выпуск новой версии
 
 1. Поднимите номер в `VERSION` и допишите `CHANGELOG.md`, закоммитьте.
-2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v5.3 && git push origin v5.3`).
+2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v5.4 && git push origin v5.4`).
    GitHub соберёт оба DMG на macOS, выложит их в Releases и обновит папку `downloads/`.
 
 Как устроен мост между интерфейсом и оболочкой и как добавлять функции — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

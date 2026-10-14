@@ -47,6 +47,8 @@ extension Engine {
             fail(it, lines: job.tail + ["ERROR: could not read video information"])
             return
         }
+        let isList = (json["_type"] as? String) == "playlist" || json["entries"] != nil
+        if !isList { saveInfo(it, line: line) }
         applyResolved(it, json)
         dirty = true
         scheduleSave()
@@ -244,8 +246,9 @@ extension Engine {
                                 sectionTo: it.isEntry ? "" : it.sectionTo,
                                 noCookies: it.noCookies, groupTitle: it.groupTitle,
                                 printFile: printFile, tempDir: tempDirPath(for: it.id),
-                                fallback: it.fallback)
+                                fallback: it.fallback, infoFile: usableInfo(it))
         let args = ArgsBuilder.downloadArgs(spec, settings: settings, tools: tools)
+        if spec.infoFile.isEmpty { it.infoFile = "" }
 
         // Полосу прогресса начинаем заново: yt-dlp сам докачает .part, а счётчик покажет остаток.
         var streams = it.streams
@@ -266,7 +269,7 @@ extension Engine {
         dirty = true
 
         let id = it.id
-        Log.shared.write("download \(it.url) quality=\(it.quality) audio=\(it.audioOnly)")
+        Log.shared.write("download \(it.url) quality=\(it.quality) audio=\(it.audioOnly) reuse-info=\(!spec.infoFile.isEmpty)")
         do {
             job.process = try RunningProcess.start(
                 exe: tools.ytdlp, args: args, env: ArgsBuilder.environment(tools: tools),
@@ -384,6 +387,7 @@ extension Engine {
     }
 
     func complete(_ it: Item, _ job: Job) {
+        removeInfo(it)
         let path = resultPath(job)
         let size = fileSize(atPath: path) ?? it.total
         let ext = (path as NSString).pathExtension.lowercased()
@@ -416,6 +420,7 @@ extension Engine {
     // MARK: - ошибки
 
     func fail(_ it: Item, message: String, kind: ErrorKind, raw: String = "") {
+        removeInfo(it)
         it.status = .error
         it.error = message
         it.rawError = raw
@@ -427,6 +432,7 @@ extension Engine {
     }
 
     func fail(_ it: Item, lines: [String]) {
+        removeInfo(it)
         let lang = settings.lang
         let c = ErrorClassifier.classify(lines: lines, lang: lang)
         Log.shared.write("fail \(it.url) kind=\(c.kind.rawValue) :: \(c.raw)")

@@ -214,6 +214,50 @@ final class E2ETests: XCTestCase {
         e.shutdown()
     }
 
+    /// Сохранённый разбор берётся только свежим и только при обычных настройках (не после отказа 403).
+    func testSavedInfoIsUsedOnlyWhenFresh() throws {
+        let e = Engine(delegate: Collector())
+        let it = Item(url: "https://example.com/v", title: "v")
+        e.saveInfo(it, line: "{\"id\":\"x\"}")
+        XCTAssertEqual(e.usableInfo(it), e.infoPath(for: it.id))
+
+        it.forbiddenRetries = 1
+        XCTAssertEqual(e.usableInfo(it), "", "после отказа 403 ссылки в разборе могли протухнуть")
+        it.forbiddenRetries = 0
+        it.fallback = 1
+        XCTAssertEqual(e.usableInfo(it), "", "запасные клиенты YouTube требуют нового разбора")
+        it.fallback = 0
+
+        let old = Date().addingTimeInterval(-Engine.infoMaxAge - 60)
+        try FileManager.default.setAttributes([.modificationDate: old], ofItemAtPath: e.infoPath(for: it.id))
+        XCTAssertEqual(e.usableInfo(it), "", "устаревший разбор не используется")
+
+        e.removeInfo(it)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: e.infoPath(for: it.id)))
+        XCTAssertEqual(it.infoFile, "")
+    }
+
+    /// Страница ролика разбирается один раз: загрузка берёт сохранённый результат разбора, а не разбирает всё заново
+    /// (на YouTube второй разбор — это ещё десятки секунд). После завершения служебный файл убирается.
+    func testDownloadReusesResolvedInfo() throws {
+        try requireE2E()
+        let tools = Components.detect()
+        try XCTSkipUnless(tools.hasFFmpeg, "ffmpeg is not installed")
+        let folder = tempFolder()
+        let (e, c) = try makeEngine(folder: folder)
+        e.handle(path: "/api/settings", body: ["speedLimit": "", "maxParallel": 1])
+        e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/hls/master.m3u8", "quality": "1080p"])
+        try wait("done") { c.history.count == 1 && c.items.isEmpty }
+        let path = c.history[0]["filepath"] as? String ?? ""
+        XCTAssertTrue(FileManager.default.fileExists(atPath: path), path)
+        assertOnlyFinished(folder, count: 1)
+        let log = Log.shared.tail()
+        XCTAssertTrue(log.contains("reuse-info=true"), "загрузка не использовала сохранённый разбор:\n\(log)")
+        let cache = (try? FileManager.default.contentsOfDirectory(atPath: AppPaths.cacheDir.path)) ?? []
+        XCTAssertFalse(cache.contains { $0.hasPrefix("info-") }, "остался служебный файл разбора: \(cache)")
+        e.shutdown()
+    }
+
     /// Полоса действительно живёт во время загрузки: проценты и скачанные байты растут между 0 и 100,
     /// карточка не уходит раньше времени в «склеиваю». (В 5.0 и 5.1 весь прогресс терялся в первую секунду.)
     func testProgressIsLiveWhileDownloading() throws {
