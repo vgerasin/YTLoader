@@ -1,0 +1,88 @@
+Collecting yt-dlp
+  Downloading yt_dlp-2026.8.19-py3-none-any.whl.metadata (183 kB)
+Downloading yt_dlp-2026.8.19-py3-none-any.whl (3.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 65.8 MB/s  0:00:00
+Installing collected packages: yt-dlp
+Successfully installed yt-dlp-2026.8.19
+2026.08.19
+[32m==>[0m [1mDownloading bottle manifests[0m
+✔︎ Bottle Manifest ffmpeg (9.0.1_1)
+[34m==>[0m [1mWould install 1 formula:[0m
+ffmpeg
+[34m==>[0m [1mWould install 11 dependencies for ffmpeg:[0m
+dav1d
+mpg123
+lame
+libvmaf
+libvpx
+opus
+sdl3
+sdl2-compat
+svt-av1
+x264
+x265
+[32m==>[0m [1mFetching downloads for: [32mffmpeg[39m[0m
+✔︎ Bottle Manifest dav1d (1.5.4)
+✔︎ Bottle Manifest mpg123 (1.33.7)
+✔︎ Bottle Manifest lame (4.0)
+✔︎ Bottle dav1d (1.5.4)
+✔︎ Bottle Manifest libvmaf (3.2.0)
+✔︎ Bottle mpg123 (1.33.7)
+✔︎ Bottle Manifest libvpx (1.17.0)
+✔︎ Bottle Manifest opus (1.6.1)
+✔︎ Bottle lame (4.0)
+✔︎ Bottle libvpx (1.17.0)
+✔︎ Bottle Manifest sdl3 (3.4.14)
+✔︎ Bottle opus (1.6.1)
+✔︎ Bottle Manifest sdl2-compat (2.32.70)
+✔︎ Bottle Manifest svt-av1 (4.2.0)
+✔︎ Bottle Manifest x264 (r3222)
+✔︎ Bottle libvmaf (3.2.0)
+✔︎ Bottle Manifest x265 (4.3)
+✔︎ Bottle sdl2-compat (2.32.70)
+✔︎ Bottle svt-av1 (4.2.0)
+✔︎ Bottle sdl3 (3.4.14)
+✔︎ Bottle x264 (r3222)
+✔︎ Bottle x265 (4.3)
+✔︎ Bottle ffmpeg (9.0.1_1)
+[32m==>[0m [1mInstalling dependencies for ffmpeg:[0m [32mdav1d[39m, [32mmpg123[39m, [32mlame[39m, [32mlibvmaf[39m, [32mlibvpx[39m, [32mopus[39m, [32msdl3[39m, [32msdl2-compat[39m, [32msvt-av1[39m, [32mx264[39m and [32mx265[39m[0m
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mdav1d[39m[0m
+[34m==>[0m [1mPouring dav1d--1.5.4.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/dav1d/1.5.4: 16 files, 976KB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mmpg123[39m[0m
+[34m==>[0m [1mPouring mpg123--1.33.7.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/mpg123/1.33.7: 34 files, 2.0MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mlame[39m[0m
+[34m==>[0m [1mPouring lame--4.0.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/lame/4.0: 29 files, 1.9MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mlibvmaf[39m[0m
+[34m==>[0m [1mPouring libvmaf--3.2.0.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/libvmaf/3.2.0: 243 files, 8.2MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mlibvpx[39m[0m
+[34m==>[0m [1mPouring libvpx--1.17.0.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/libvpx/1.17.0: 22 files, 4.4MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mopus[39m[0m
+[34m==>[0m [1mPouring opus--1.6.1.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/opus/1.6.1: 16 files, 1MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32msdl3[39m[0m
+[34m==>[0m [1mPouring sdl3--3.4.14.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/sdl3/3.4.14: 103 files, 6.3MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32msdl2-compat[39m[0m
+[34m==>[0m [1mPouring sdl2-compat--2.32.70.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/sdl2-compat/2.32.70: 117 files, 3.2MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32msvt-av1[39m[0m
+[34m==>[0m [1mPouring svt-av1--4.2.0.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/svt-av1/4.2.0: 23 files, 3.2MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mx264[39m[0m
+[34m==>[0m [1mPouring x264--r3222.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/x264/r3222: 12 files, 4.4MB
+[32m==>[0m [1mInstalling ffmpeg dependency: [32mx265[39m[0m
+[34m==>[0m [1mPouring x265--4.3.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/x265/4.3: 12 files, 16.4MB
+[32m==>[0m [1mInstalling [32mffmpeg[39m[0m
+[34m==>[0m [1mPouring ffmpeg--9.0.1_1.arm64_sonoma.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/ffmpeg/9.0.1_1: 290 files, 54.4MB
+[32m==>[0m [1mCaveats[0m
+[34m==>[0m [1mffmpeg[0m
+ffmpeg-full includes additional tools and libraries that are not included in the regular ffmpeg formula.
+ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers
