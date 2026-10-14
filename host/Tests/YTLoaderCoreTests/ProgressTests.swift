@@ -42,6 +42,22 @@ final class ProgressTests: XCTestCase {
         XCTAssertEqual(ProgressParser.parse("YTL|broken"), .other)
     }
 
+    /// Эти строки yt-dlp печатает ДО загрузки. Если принять их за «постобработку», карточка уходит в режим
+    /// «склеиваю» и весь прогресс отбрасывается (так было в 5.0 и 5.1).
+    func testPreDownloadStepsAreNotTheEndOfTheDownload() {
+        for line in ["[ThumbnailsConvertor] There aren't any thumbnails to convert",
+                     "[ThumbnailsConvertor] Converting thumbnail \"/x/a.webp\" to jpg",
+                     "[SponsorBlock] Fetching SponsorBlock segments",
+                     "[SubtitlesConvertor] Converting subtitles"] {
+            XCTAssertEqual(ProgressParser.parse(line), .other, line)
+        }
+        for line in ["[Metadata] Adding metadata to \"/x/a.mp4\"", "[EmbedThumbnail] ffmpeg: Adding thumbnail to \"/x/a.mp4\"",
+                     "[MoveFiles] Moving file \"/x/a.mp4\" to \"/y/a.mp4\"", "[FixupM3u8] Fixing MPEG-TS in MP4 container",
+                     "[ModifyChapters] Removing chapters from a.mp4"] {
+            XCTAssertEqual(ProgressParser.parse(line), .postprocess(""), line)
+        }
+    }
+
     func testTrackerTwoStreams() {
         var tr = ProgressTracker(streams: [
             StreamInfo(kind: "video", total: 800), StreamInfo(kind: "audio", total: 200),

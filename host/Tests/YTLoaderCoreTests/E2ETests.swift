@@ -214,6 +214,32 @@ final class E2ETests: XCTestCase {
         e.shutdown()
     }
 
+    /// Полоса действительно живёт во время загрузки: проценты и скачанные байты растут между 0 и 100,
+    /// карточка не уходит раньше времени в «склеиваю». (В 5.0 и 5.1 весь прогресс терялся в первую секунду.)
+    func testProgressIsLiveWhileDownloading() throws {
+        try requireE2E()
+        let folder = tempFolder()
+        let (e, c) = try makeEngine(folder: folder)
+        e.handle(path: "/api/settings", body: ["speedLimit": "100K"])
+        e.handle(path: "/api/add", body: ["text": "http://127.0.0.1:\(E2ETests.port)/sample.mp4", "quality": "720p"])
+        try wait("finished") { c.history.count == 1 && c.items.isEmpty }
+
+        var mid: [(pct: Int, bytes: Int64)] = []
+        var earlyMerge = false
+        for st in c.states {
+            for it in st["items"] as? [[String: Any]] ?? [] where (it["status"] as? String) == "downloading" {
+                let pct = (it["pct"] as? NSNumber)?.intValue ?? 0
+                let bytes = (it["downloaded"] as? NSNumber)?.int64Value ?? 0
+                if (it["stage"] as? String) == "merge", pct < 100 { earlyMerge = true }
+                if pct > 0 && pct < 100 && bytes > 0 { mid.append((pct, bytes)) }
+            }
+        }
+        XCTAssertGreaterThanOrEqual(mid.count, 3, "прогресс по ходу загрузки не виден: \(mid)")
+        XCTAssertEqual(mid.map { $0.bytes }, mid.map { $0.bytes }.sorted(), "скачанные байты должны расти")
+        XCTAssertFalse(earlyMerge, "карточка ушла в «склеиваю» до конца загрузки")
+        e.shutdown()
+    }
+
     /// Отмена: недокачанное и обложка удаляются, в папке загрузок ничего не остаётся.
     func testCancelLeavesNoTraceInDownloads() throws {
         try requireE2E()

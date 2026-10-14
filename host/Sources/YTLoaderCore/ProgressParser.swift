@@ -80,9 +80,16 @@ public enum ProgressParser {
         if line.hasPrefix("[ExtractAudio] Destination: ") {
             return .postprocess(String(line.dropFirst("[ExtractAudio] Destination: ".count)))
         }
-        for tag in ["[VideoConvertor]", "[VideoRemuxer]", "[EmbedSubtitle]", "[Metadata]", "[ThumbnailsConvertor]",
-                    "[EmbedThumbnail]", "[SponsorBlock]", "[ModifyChapters]", "[FixupM3u8]", "[FixupM4a]",
-                    "[FixupStretched]", "[FixupTimestamp]", "[FFmpegExtractAudio]", "[MoveFiles]", "[SubtitlesConvertor]"]
+        // Эти шаги yt-dlp выполняет ДО загрузки (подготовка обложки, список блоков SponsorBlock,
+        // конвертация субтитров), поэтому концом загрузки они не считаются. Раньше такая строка
+        // переводила карточку в режим «склеиваю» и весь дальнейший прогресс отбрасывался.
+        for tag in ["[ThumbnailsConvertor]", "[SponsorBlock]", "[SubtitlesConvertor]"] where line.hasPrefix(tag) {
+            return .other
+        }
+        // А эти идут только после того, как всё скачано.
+        for tag in ["[VideoConvertor]", "[VideoRemuxer]", "[EmbedSubtitle]", "[Metadata]",
+                    "[EmbedThumbnail]", "[ModifyChapters]", "[FixupM3u8]", "[FixupM4a]",
+                    "[FixupStretched]", "[FixupTimestamp]", "[FFmpegExtractAudio]", "[MoveFiles]"]
         where line.hasPrefix(tag) {
             return .postprocess("")
         }
