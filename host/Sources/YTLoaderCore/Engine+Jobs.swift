@@ -444,6 +444,14 @@ extension Engine {
             requeue(it)
             return
         }
+        // «Подтвердите, что вы не робот» (YouTube подозревает автоматический запрос: VPN, общий адрес, частые загрузки).
+        // Другой набор клиентов иногда проходит без входа в аккаунт — пробуем один раз, потом просим выбрать браузер с cookies.
+        if c.kind == .bot, Sites.isYouTube(it.url), it.fallback == 0 {
+            it.fallback = 1
+            it.notBefore = Date().timeIntervalSince1970 + 2
+            requeue(it)
+            return
+        }
         // Отказ 403 (чаще всего посреди загрузки: ссылка на видео «протухла»). Лесенка, пока не показали ошибку:
         // 1) просто повторить — yt-dlp возьмёт новые ссылки и докачает начатое;
         // 2) на YouTube — запасной набор клиентов (плееров);
@@ -477,7 +485,8 @@ extension Engine {
             requeue(it)
             return
         }
-        fail(it, message: c.message, kind: c.kind, raw: c.raw)
+        // у «не робот» сообщение само говорит, что делать, а сырой текст — длинные ссылки на вики yt-dlp
+        fail(it, message: c.message, kind: c.kind, raw: c.kind == .bot ? "" : c.raw)
         emitNotification(title: Loc.t(lang, "Download failed"), body: it.title, path: "")
     }
 

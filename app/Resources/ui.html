@@ -507,7 +507,7 @@ const I18N = {
     "в очереди": "queued", "ожидает слота": "waiting for a slot", "на паузе": "paused",
     "видео": "video", "аудио": "audio", "склейка": "merging", "в mp3": "to mp3",
     "склеиваю дорожки…": "merging tracks…", "конвертирую в mp3…": "converting to mp3…",
-    "осталось": "left", "из": "of", "загружено": "downloaded", "без cookies": "without cookies",
+    "осталось": "left", "из": "of", "загружено": "downloaded", "без cookies": "without cookies", "Настроить cookies": "Set up cookies",
     "не удалось скачать": "download failed", "превью": "preview",
     "Ждёт подключения к Wi-Fi": "Waiting for Wi-Fi",
     "Ждёт ручного запуска": "Waiting for you to start it",
@@ -642,7 +642,7 @@ const I18N = {
     "в очереди": "in der Warteschlange", "ожидает слота": "wartet auf einen Platz", "на паузе": "pausiert",
     "видео": "Video", "аудио": "Audio", "склейка": "Zusammenfügen", "в mp3": "zu MP3",
     "склеиваю дорожки…": "Spuren werden zusammengefügt…", "конвертирую в mp3…": "wird zu MP3 konvertiert…",
-    "осталось": "übrig", "из": "von", "загружено": "geladen", "без cookies": "ohne Cookies",
+    "осталось": "übrig", "из": "von", "загружено": "geladen", "без cookies": "ohne Cookies", "Настроить cookies": "Cookies einrichten",
     "не удалось скачать": "Download fehlgeschlagen", "превью": "Vorschau",
     "Ждёт подключения к Wi-Fi": "Wartet auf WLAN",
     "Ждёт ручного запуска": "Wartet auf manuellen Start",
@@ -769,7 +769,7 @@ const I18N = {
     "в очереди": "en file", "ожидает слота": "attend une place", "на паузе": "en pause",
     "видео": "vidéo", "аудио": "audio", "склейка": "fusion", "в mp3": "en mp3",
     "склеиваю дорожки…": "fusion des pistes…", "конвертирую в mp3…": "conversion en mp3…",
-    "осталось": "restant", "из": "sur", "загружено": "téléchargé", "без cookies": "sans cookies",
+    "осталось": "restant", "из": "sur", "загружено": "téléchargé", "без cookies": "sans cookies", "Настроить cookies": "Configurer les cookies",
     "не удалось скачать": "échec du téléchargement", "превью": "aperçu",
     "Ждёт подключения к Wi-Fi": "Attend le Wi-Fi",
     "Ждёт ручного запуска": "Attend un démarrage manuel",
@@ -896,7 +896,7 @@ const I18N = {
     "в очереди": "en cola", "ожидает слота": "esperando hueco", "на паузе": "en pausa",
     "видео": "vídeo", "аудио": "audio", "склейка": "uniendo", "в mp3": "a mp3",
     "склеиваю дорожки…": "uniendo pistas…", "конвертирую в mp3…": "convirtiendo a mp3…",
-    "осталось": "quedan", "из": "de", "загружено": "descargado", "без cookies": "sin cookies",
+    "осталось": "quedan", "из": "de", "загружено": "descargado", "без cookies": "sin cookies", "Настроить cookies": "Configurar cookies",
     "не удалось скачать": "no se pudo descargar", "превью": "vista previa",
     "Ждёт подключения к Wi-Fi": "Esperando Wi-Fi",
     "Ждёт ручного запуска": "Esperando que la inicies",
@@ -1390,8 +1390,13 @@ function updateQueueCard(c, it) {
   else if (st === "downloading" || st === "queued")
     html = b("solid", "pause", t("Пауза")) + b("", "deferWifi", t("Отложить")) + b("", "cancel", t("Отменить"));
   else if (st === "paused") html = b("primary", "resume", t("Продолжить")) + b("", "cancel", t("Отменить"));
-  else if (st === "error") html = b("primary", "resume", t("Повторить")) + b("", "cancel", t("Убрать"));
-  updateActions(c, st + "|" + LANG, html);
+  else if (st === "error") {
+    // для ошибок, которые лечатся входом в аккаунт, сразу ведём в настройки cookies
+    const fixWithCookies = ["bot", "age", "private", "cookies"].includes(it.errorKind);
+    html = b("primary", "resume", t("Повторить")) + (fixWithCookies ? b("", "cookies", t("Настроить cookies")) : "")
+         + b("", "cancel", t("Убрать"));
+  }
+  updateActions(c, st + "|" + LANG + "|" + (it.errorKind || ""), html);
 }
 
 const WAIT_LABEL = {time: v => t("Запуск по расписанию") + " · " + (v || ""),
@@ -1785,6 +1790,7 @@ $("#list").addEventListener("click", async e => {
   if (act === "pause") api("/api/pause", {id});
   else if (act === "resume") api("/api/resume", {id});
   else if (act === "cancel") api("/api/cancel", {id});
+  else if (act === "cookies") openSettings("load");
   else if (act === "deferWifi") api("/api/defer", {id, mode: "manual"});
   else if (act === "reveal") api("/api/reveal", {path: b.dataset.path});
   else if (act === "clearHistory") api("/api/clearHistory", {});

@@ -214,6 +214,33 @@ final class E2ETests: XCTestCase {
         e.shutdown()
     }
 
+    /// «Подтвердите, что вы не робот»: на YouTube один раз пробуем другие клиенты, потом просим выбрать браузер с cookies;
+    /// на других сайтах такой повтор не нужен. Сырой текст с длинными ссылками пользователю не показываем.
+    func testBotCheckLadder() {
+        let e = Engine(delegate: Collector())
+        let lines = ["ERROR: [youtube] abc: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication."]
+
+        let yt = Item(url: "https://www.youtube.com/watch?v=abc", title: "t")
+        yt.status = .resolving
+        e.items = [yt]
+        e.fail(yt, lines: lines)
+        XCTAssertEqual(yt.fallback, 1, "сначала запасные клиенты")
+        XCTAssertEqual(yt.status, .resolving)
+        e.fail(yt, lines: lines)
+        XCTAssertEqual(yt.status, .error)
+        XCTAssertEqual(yt.errorKind, "bot")
+        XCTAssertEqual(yt.rawError, "")
+        XCTAssertFalse(yt.error.contains("update yt-dlp"), "обновление yt-dlp тут не поможет")
+        XCTAssertEqual(yt.uiJSON()["errorKind"] as? String, "bot")
+
+        let vk = Item(url: "https://vk.com/video-1_2", title: "v")
+        vk.status = .resolving
+        e.items = [vk]
+        e.fail(vk, lines: lines)
+        XCTAssertEqual(vk.fallback, 0)
+        XCTAssertEqual(vk.status, .error)
+    }
+
     /// Сохранённый разбор берётся только свежим и только при обычных настройках (не после отказа 403).
     func testSavedInfoIsUsedOnlyWhenFresh() throws {
         let e = Engine(delegate: Collector())

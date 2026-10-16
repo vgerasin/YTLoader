@@ -3,7 +3,7 @@ name: Release DMG
 # Собирает DMG на macOS-раннере GitHub (универсальный и Intel), выкладывает их в Releases
 # и обновляет готовые образы в папке downloads/.
 # Запуск: вкладка Actions → «Release DMG» → Run workflow,
-# либо  git tag v5.5 && git push origin v5.5
+# либо  git tag v5.6 && git push origin v5.6
 
 on:
   push:

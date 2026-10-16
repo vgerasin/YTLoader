@@ -144,7 +144,7 @@ public final class Item: Codable {
             "speed": jsonNum(speed), "eta": jsonNum(eta),
             "quality": quality, "format": format,
             "streams": streams.map { $0.json },
-            "error": error, "rawError": rawError, "noCookies": noCookies,
+            "error": error, "rawError": rawError, "errorKind": errorKind, "noCookies": noCookies,
             "deferMode": deferMode, "deferTime": deferTime, "filepath": filepath,
             "added": added, "site": site,
         ]

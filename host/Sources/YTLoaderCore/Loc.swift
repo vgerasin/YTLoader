@@ -64,11 +64,11 @@ public enum Loc {
             "es": "Falta un motor de JavaScript (deno). Sin él YouTube devuelve enlaces con error 403. Instálalo en el asistente.",
         ],
         "err.bot": [
-            "en": "The site asks you to confirm you are not a bot. Turn on browser cookies in Settings or update yt-dlp.",
-            "ru": "Сайт просит подтвердить, что вы не робот. Включите cookies браузера в настройках или обновите yt-dlp.",
-            "de": "Die Seite verlangt den Nachweis, dass du kein Bot bist. Aktiviere Browser-Cookies in den Einstellungen oder aktualisiere yt-dlp.",
-            "fr": "Le site demande de prouver que vous n’êtes pas un robot. Activez les cookies du navigateur dans les réglages ou mettez à jour yt-dlp.",
-            "es": "El sitio pide confirmar que no eres un robot. Activa las cookies del navegador en Ajustes o actualiza yt-dlp.",
+            "en": "YouTube thinks this request is automated (common with a VPN, a shared network or many downloads). Choose the browser where you are signed in to YouTube under “Browser cookies” in Settings, then press Retry.",
+            "ru": "YouTube принял запрос за автоматический (так бывает при VPN, общем адресе сети или частых загрузках). Выберите в настройках браузер, в котором вы вошли в YouTube («Cookies из браузера»), и нажмите «Повторить».",
+            "de": "YouTube hält diese Anfrage für automatisiert (typisch bei VPN, gemeinsamem Netz oder vielen Downloads). Wähle in den Einstellungen unter „Browser-Cookies“ den Browser, in dem du bei YouTube angemeldet bist, und tippe auf „Wiederholen“.",
+            "fr": "YouTube pense que cette requête est automatisée (fréquent avec un VPN, un réseau partagé ou beaucoup de téléchargements). Dans les réglages, choisissez le navigateur où vous êtes connecté à YouTube (« Cookies du navigateur »), puis cliquez sur « Réessayer ».",
+            "es": "YouTube cree que esta solicitud es automática (ocurre con VPN, redes compartidas o muchas descargas). En Ajustes elige el navegador donde tienes la sesión de YouTube («Cookies del navegador») y pulsa «Reintentar».",
         ],
         "err.age": [
             "en": "Age-restricted video. Pick a browser for cookies in Settings.",

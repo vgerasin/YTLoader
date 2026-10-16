@@ -67,8 +67,8 @@
 
 ## Установка
 
-1. Скачайте **[YTLoader-5.5.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.5.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
-   Отдельный образ только для Intel: **[YTLoader-5.5-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.5-intel.dmg)**.
+1. Скачайте **[YTLoader-5.6.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.6.dmg)** — универсальный образ для Mac на Apple Silicon (M1 и новее) и на Intel.
+   Отдельный образ только для Intel: **[YTLoader-5.6-intel.dmg](https://github.com/vgerasin/YTLoader/raw/main/downloads/YTLoader-5.6-intel.dmg)**.
    Контрольные суммы SHA-256 — в файле [downloads/SHA256SUMS](downloads/SHA256SUMS).
 2. Откройте DMG и перетащите YTLoader в «Программы».
 3. Первый запуск: приложение подписано без аккаунта разработчика Apple, поэтому macOS может его не открыть.
@@ -76,6 +76,14 @@
 4. Мастер первого запуска проверит компоненты. yt-dlp уже внутри; ffmpeg, ffprobe и JS-движок (deno) он скачает по кнопке «Установить».
 
 Новые версии собираются автоматически и появляются в разделе [Releases](../../releases) — см. «Выпуск новой версии» ниже.
+
+### Если YouTube просит подтвердить, что вы не робот
+
+Так бывает при VPN, общем адресе сети или частых загрузках — YouTube не доверяет запросам без входа в аккаунт.
+Откройте **Настройки → Загрузка → «Cookies из браузера»**, выберите браузер, в котором вы вошли в YouTube, сохраните и нажмите
+«Повторить». macOS может один раз спросить доступ к связке ключей браузера (для Chrome — «Chrome Safe Storage»): разрешите.
+Если cookies не читаются, дайте приложению «Полный доступ к диску» (Системные настройки → Конфиденциальность и безопасность)
+или выберите другой браузер.
 
 ### Собрать самому
 
@@ -115,7 +123,7 @@ make screenshots  # обновить docs/screenshots (python3 + playwright)
 ### Выпуск новой версии
 
 1. Поднимите номер в `VERSION` и допишите `CHANGELOG.md`, закоммитьте.
-2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v5.5 && git push origin v5.5`).
+2. На GitHub: вкладка **Actions → Release DMG → Run workflow** (или `git tag v5.6 && git push origin v5.6`).
    GitHub соберёт оба DMG на macOS, выложит их в Releases и обновит папку `downloads/`.
 
 Как устроен мост между интерфейсом и оболочкой и как добавлять функции — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

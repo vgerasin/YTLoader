@@ -2,7 +2,7 @@
 
 Нативная часть приложения на Swift: окно с `app/Resources/ui.html`, очередь загрузок, запуск `yt-dlp`/`ffmpeg`,
 сеть, буфер обмена, Dock, строка меню, уведомления. Устройство моста между оболочкой и интерфейсом —
-в [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) (версия 5.5).
+в [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) (версия 5.6).
 
 ```
 Package.swift
